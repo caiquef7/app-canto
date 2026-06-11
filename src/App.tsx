@@ -60,7 +60,7 @@ const AULAS = [
       "Leia a letra da música antes de cantá-la — entenda o que está dizendo.",
       "Identifique o clímax emocional da música.",
       "Use dinâmica (forte e piano) para expressar sentimentos.",
-      "Grave-se cantando e assista para perceber sua expressão facial.",
+      "Grave-se cantando e assista para perceber sua expression facial.",
     ],
     video: null,
   },
@@ -68,7 +68,7 @@ const AULAS = [
 
 const EXERCICIOS = [
   { id: 1, nome: "Sirene", descricao: "Glissando do grave ao agudo em 'wooo'", duracao: 30, emoji: "🚨", instrucao: "Faça um som de sirene, subindo do grave ao agudo e voltando suavemente. Mantenha a boca relaxada." },
-  { id: 2, nome: "Lip Trill", descricao: "Vibração dos lábios em escala", duracao: 45, emoji: "💋", instrucao: "Solte os lábios vibrando como um motor enquanto canta uma escala. Ajuda a relaxar a laringe." },
+  { id: 2, nome: "Lip Trill", descricao: "Vibração dos lábios in escala", duracao: 45, emoji: "💋", instrucao: "Solte os lábios vibrando como um motor enquanto canta uma escala. Ajuda a relaxar a laringe." },
   { id: 3, nome: "Vocalise Mi-Ma-Mo", descricao: "Articulação e abertura da boca", duracao: 60, emoji: "🗣️", instrucao: "Cante 'mi-ma-mo' em cada nota de uma escala. Exagere na abertura da boca no 'ma'." },
   { id: 4, nome: "Escala de Dó", descricao: "Escala maior ascendente e descendente", duracao: 90, emoji: "🎼", instrucao: "Sobe: Dó Ré Mi Fá Sol Lá Si Dó. Desce: Dó Si Lá Sol Fá Mi Ré Dó. Use vogal 'A' aberta." },
   { id: 5, nome: "Staccato", descricao: "Notas curtas e articuladas em 'ha'", duracao: 45, emoji: "⚡", instrucao: "Cante 'ha-ha-ha-ha-ha' rápido e articulado, cada nota separada. Fortalece o suporte do diafragma." },
@@ -100,7 +100,7 @@ export default function AulasCanto() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [pitch, setPitch] = useState(null);
   const [afinando, setAfinando] = useState(false);
-  // Puxa as mensagens salvas ou inicia uma nova conversa
+  
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem("vox_chat_history");
@@ -111,11 +111,11 @@ export default function AulasCanto() {
     ];
   });
 
-  // Salva no celular sempre que uma nova mensagem for enviada
   useEffect(() => {
     localStorage.setItem("vox_chat_history", JSON.stringify(messages));
   }, [messages]);
-  const [input, setInput] = useState("");
+
+  const input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   
   const audioCtxRef = useRef(null);
@@ -158,7 +158,10 @@ export default function AulasCanto() {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtxRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioCtxRef.current.createAnalyser();
-      analyserRef.current.fftSize = 2048;
+      
+      // Aumentamos o fftSize para 8192 para captar frequências fundamentais com altíssima resolução
+      analyserRef.current.fftSize = 8192; 
+      
       source.connect(analyserRef.current);
       setAfinando(true);
       detectPitch();
@@ -177,7 +180,7 @@ export default function AulasCanto() {
 
   const detectPitch = () => {
     const analyser = analyserRef.current;
-    if(!analyser) return;
+    if (!analyser) return;
     const buffer = new Float32Array(analyser.fftSize);
     const tick = () => {
       analyser.getFloatTimeDomainData(buffer);
@@ -191,24 +194,48 @@ export default function AulasCanto() {
   function autoCorrelate(buffer, sampleRate) {
     let SIZE = buffer.length;
     let rms = 0;
-    for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
+
+    for (let i = 0; i < SIZE; i++) {
+      let val = buffer[i];
+      rms += val * val;
+    }
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) return -1;
-    let r1 = 0, r2 = SIZE - 1;
-    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buffer[i]) < 0.2) { r1 = i; break; }
-    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buffer[SIZE - i]) < 0.2) { r2 = SIZE - i; break; }
-    buffer = buffer.slice(r1, r2);
-    SIZE = buffer.length;
-    const c = new Array(SIZE).fill(0);
-    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buffer[j] * buffer[j + i];
-    let d = 0; while (c[d] > c[d + 1]) d++;
-    let maxval = -1, maxpos = -1;
-    for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-    let T0 = maxpos;
-    const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-    const a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
-    if (a) T0 -= b / (2 * a);
-    return sampleRate / T0;
+    if (rms < 0.01) return -1; // Silêncio ou ruído baixo de fundo
+
+    let best_offset = -1;
+    let best_correlation = 0;
+    let foundGoodCorrelation = false;
+    let correlations = new Array(SIZE).fill(0);
+    let lastCorrelation = 1;
+    
+    let MIN_SAMPLES = 0;
+    let MAX_SAMPLES = Math.floor(SIZE / 2);
+    let GOOD_ENOUGH_CORRELATION = 0.9; // Exigência de 90% de certeza do algoritmo
+
+    for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
+      let correlation = 0;
+      for (let i = 0; i < MAX_SAMPLES; i++) {
+        correlation += Math.abs(buffer[i] - buffer[i + offset]);
+      }
+      correlation = 1 - (correlation / MAX_SAMPLES);
+      correlations[offset] = correlation;
+
+      if ((correlation > GOOD_ENOUGH_CORRELATION) && (correlation > lastCorrelation)) {
+        foundGoodCorrelation = true;
+        if (correlation > best_correlation) {
+          best_correlation = correlation;
+          best_offset = offset;
+        }
+      } else if (foundGoodCorrelation) {
+        let shift = (correlations[best_offset + 1] - correlations[best_offset - 1]) / correlations[best_offset];
+        return sampleRate / (best_offset + (8 * shift));
+      }
+      lastCorrelation = correlation;
+    }
+    if (best_correlation > 0.01) {
+      return sampleRate / best_offset;
+    }
+    return -1;
   }
 
   // IA Chat - Modificado para usar a API da Vercel
@@ -234,14 +261,14 @@ export default function AulasCanto() {
     setLoading(false);
   };
 
- // Calcula a precisão de 0% (muito desafinado) a 100% (perfeito)
+  // Calcula a precisão de 0% (muito desafinado) a 100% (perfeito)
   const accuracy = pitch ? Math.max(0, 100 - (Math.abs(pitch.cents) * 2)) : 0;
 
   const getTunerColor = (acc) => {
     if (!pitch) return "#888";
-    if (acc < 50) return "#f87171"; // Vermelho (no começo)
-    if (acc < 90) return "#facc15"; // Amarelo (quase lá)
-    return "#4ade80"; // Verde (top)
+    if (acc < 50) return "#f87171"; // Vermelho
+    if (acc < 90) return "#facc15"; // Amarelo
+    return "#4ade80"; // Verde
   };
 
   const getTunerLabel = (acc, cents) => {
@@ -371,7 +398,7 @@ export default function AulasCanto() {
           </div>
         )}
 
-      {/* ===== AFINADOR ===== */}
+        {/* ===== AFINADOR ===== */}
         {section === "Afinador" && (
           <div style={{ textAlign: "center" }}>
             <div style={{ marginBottom: 24 }}>
@@ -412,7 +439,7 @@ export default function AulasCanto() {
           </div>
         )}
 
-       {/* ===== IA PROFESSORA ===== */}
+        {/* ===== IA PROFESSORA ===== */}
         {section === "IA Professora" && (
           <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)" }}>
             <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
