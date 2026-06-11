@@ -100,9 +100,21 @@ export default function AulasCanto() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [pitch, setPitch] = useState(null);
   const [afinando, setAfinando] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }
-  ]);
+  // Puxa as mensagens salvas ou inicia uma nova conversa
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem("vox_chat_history");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [
+      { role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }
+    ];
+  });
+
+  // Salva no celular sempre que uma nova mensagem for enviada
+  useEffect(() => {
+    localStorage.setItem("vox_chat_history", JSON.stringify(messages));
+  }, [messages]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   
@@ -389,12 +401,24 @@ export default function AulasCanto() {
           </div>
         )}
 
-        {/* ===== IA PROFESSORA ===== */}
+       {/* ===== IA PROFESSORA ===== */}
         {section === "IA Professora" && (
           <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)" }}>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 2 }}>🎤 Professora Maria Diniz</div>
-              <div style={{ color: "#a085cc", fontSize: 13 }}>IA especialista em técnica vocal</div>
+            <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 2 }}>🎤 Professora Maria Diniz</div>
+                <div style={{ color: "#a085cc", fontSize: 13 }}>IA especialista em técnica vocal</div>
+              </div>
+              
+              {messages.length > 1 && (
+                <button onClick={() => {
+                  if(window.confirm("Apagar todo o histórico de conversa com a professora?")) {
+                    setMessages([{ role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }]);
+                  }
+                }} style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171", borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer", transition: "all 0.2s" }}>
+                  🗑️ Limpar Chat
+                </button>
+              )}
             </div>
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16 }}>
               {messages.map((m, i) => (
