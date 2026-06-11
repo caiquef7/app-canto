@@ -234,19 +234,21 @@ export default function AulasCanto() {
     setLoading(false);
   };
 
-  const centsColor = (cents) => {
-    if (!cents && cents !== 0) return "#888";
-    const abs = Math.abs(cents);
-    if (abs < 10) return "#4ade80";
-    if (abs < 25) return "#facc15";
-    return "#f87171";
+ // Calcula a precisão de 0% (muito desafinado) a 100% (perfeito)
+  const accuracy = pitch ? Math.max(0, 100 - (Math.abs(pitch.cents) * 2)) : 0;
+
+  const getTunerColor = (acc) => {
+    if (!pitch) return "#888";
+    if (acc < 50) return "#f87171"; // Vermelho (no começo)
+    if (acc < 90) return "#facc15"; // Amarelo (quase lá)
+    return "#4ade80"; // Verde (top)
   };
 
-  const centsLabel = (cents) => {
-    if (!cents && cents !== 0) return "";
-    if (Math.abs(cents) < 10) return "Afinado! 🎯";
-    if (cents > 0) return `+${cents}¢ (alto demais)`;
-    return `${cents}¢ (baixo demais)`;
+  const getTunerLabel = (acc, cents) => {
+    if (!pitch) return afinando ? "Aguardando nota..." : "Inicie o afinador";
+    if (acc >= 90) return "Perfeito! 🎯";
+    if (cents > 0) return "Muito agudo (cante mais grave) 👇";
+    return "Muito grave (cante mais agudo) 👆";
   };
 
   return (
@@ -369,27 +371,36 @@ export default function AulasCanto() {
           </div>
         )}
 
-        {/* ===== AFINADOR ===== */}
+      {/* ===== AFINADOR ===== */}
         {section === "Afinador" && (
           <div style={{ textAlign: "center" }}>
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>Afinador de Voz</div>
-              <div style={{ color: "#a085cc", fontSize: 14 }}>Cante uma nota e veja se está afinado</div>
+              <div style={{ color: "#a085cc", fontSize: 14 }}>Cante uma nota e faça o medidor chegar no verde!</div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(180,120,255,0.2)", borderRadius: 28, padding: 32, marginBottom: 24 }}>
-              <div style={{ fontSize: 80, fontWeight: "bold", color: pitch ? centsColor(pitch.cents) : "#3a3050", marginBottom: 8, minHeight: 100, display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.3s" }}>
+              <div style={{ fontSize: 80, fontWeight: "bold", color: pitch ? getTunerColor(accuracy) : "#3a3050", marginBottom: 8, minHeight: 100, display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.3s" }}>
                 {pitch ? pitch.note : "—"}
               </div>
               {pitch && <div style={{ color: "#a085cc", fontSize: 14, marginBottom: 4 }}>Oitava {pitch.octave} • {Math.round(pitch.frequency)} Hz</div>}
-              <div style={{ color: centsColor(pitch?.cents), fontSize: 16, minHeight: 28, fontWeight: "bold" }}>{pitch ? centsLabel(pitch.cents) : (afinando ? "Aguardando nota..." : "Inicie o afinador")}</div>
+              
+              <div style={{ color: getTunerColor(accuracy), fontSize: 16, minHeight: 28, fontWeight: "bold" }}>
+                {getTunerLabel(accuracy, pitch?.cents)}
+              </div>
+
               {pitch && (
                 <div style={{ marginTop: 24 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", color: "#6b5080", fontSize: 11, marginBottom: 8 }}>
-                    <span>-50¢</span><span>0</span><span>+50¢</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: "#6b5080", fontSize: 11, marginBottom: 8, fontWeight: "bold" }}>
+                    <span>Desafinado</span>
+                    <span>Quase lá</span>
+                    <span>Top!</span>
                   </div>
-                  <div style={{ position: "relative", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 8 }}>
-                    <div style={{ position: "absolute", left: "50%", top: 0, width: 4, height: "100%", background: "rgba(255,255,255,0.2)", transform: "translateX(-50%)" }} />
-                    <div style={{ position: "absolute", left: `${50 + Math.max(-50, Math.min(50, pitch.cents))}%`, top: -4, width: 24, height: 24, background: centsColor(pitch.cents), borderRadius: "50%", transform: "translateX(-50%)", boxShadow: `0 0 12px ${centsColor(pitch.cents)}`, transition: "left 0.1s" }} />
+                  <div style={{ position: "relative", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 8, overflow: "visible" }}>
+                    {/* Barra de fundo acompanhando a bolinha */}
+                    <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${accuracy}%`, background: getTunerColor(accuracy), opacity: 0.3, borderRadius: 8, transition: "width 0.1s, background 0.3s" }} />
+                    
+                    {/* Bolinha indicadora (medidor) */}
+                    <div style={{ position: "absolute", left: `${accuracy}%`, top: -4, width: 24, height: 24, background: getTunerColor(accuracy), borderRadius: "50%", transform: "translateX(-50%)", boxShadow: `0 0 12px ${getTunerColor(accuracy)}`, transition: "left 0.1s, background 0.3s" }} />
                   </div>
                 </div>
               )}
