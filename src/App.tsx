@@ -60,7 +60,7 @@ const AULAS = [
       "Leia a letra da música antes de cantá-la — entenda o que está dizendo.",
       "Identifique o clímax emocional da música.",
       "Use dinâmica (forte e piano) para expressar sentimentos.",
-      "Grave-se cantando e assista para perceber sua expression facial.",
+      "Grave-se cantando e assista para perceber sua expressão facial.",
     ],
     video: null,
   },
@@ -68,7 +68,7 @@ const AULAS = [
 
 const EXERCICIOS = [
   { id: 1, nome: "Sirene", descricao: "Glissando do grave ao agudo em 'wooo'", duracao: 30, emoji: "🚨", instrucao: "Faça um som de sirene, subindo do grave ao agudo e voltando suavemente. Mantenha a boca relaxada." },
-  { id: 2, nome: "Lip Trill", descricao: "Vibração dos lábios in escala", duracao: 45, emoji: "💋", instrucao: "Solte os lábios vibrando como um motor enquanto canta uma escala. Ajuda a relaxar a laringe." },
+  { id: 2, nome: "Lip Trill", descricao: "Vibração dos lábios em escala", duracao: 45, emoji: "💋", instrucao: "Solte os lábios vibrando como um motor enquanto canta uma escala. Ajuda a relaxar a laringe." },
   { id: 3, nome: "Vocalise Mi-Ma-Mo", descricao: "Articulação e abertura da boca", duracao: 60, emoji: "🗣️", instrucao: "Cante 'mi-ma-mo' em cada nota de uma escala. Exagere na abertura da boca no 'ma'." },
   { id: 4, nome: "Escala de Dó", descricao: "Escala maior ascendente e descendente", duracao: 90, emoji: "🎼", instrucao: "Sobe: Dó Ré Mi Fá Sol Lá Si Dó. Desce: Dó Si Lá Sol Fá Mi Ré Dó. Use vogal 'A' aberta." },
   { id: 5, nome: "Staccato", descricao: "Notas curtas e articuladas em 'ha'", duracao: 45, emoji: "⚡", instrucao: "Cante 'ha-ha-ha-ha-ha' rápido e articulado, cada nota separada. Fortalece o suporte do diafragma." },
@@ -115,7 +115,7 @@ export default function AulasCanto() {
     localStorage.setItem("vox_chat_history", JSON.stringify(messages));
   }, [messages]);
 
-  const input, setInput] = useState("");
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   
   const audioCtxRef = useRef(null);
@@ -159,7 +159,6 @@ export default function AulasCanto() {
       const source = audioCtxRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioCtxRef.current.createAnalyser();
       
-      // Aumentamos o fftSize para 8192 para captar frequências fundamentais com altíssima resolução
       analyserRef.current.fftSize = 8192; 
       
       source.connect(analyserRef.current);
@@ -200,7 +199,7 @@ export default function AulasCanto() {
       rms += val * val;
     }
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) return -1; // Silêncio ou ruído baixo de fundo
+    if (rms < 0.01) return -1;
 
     let best_offset = -1;
     let best_correlation = 0;
@@ -210,7 +209,7 @@ export default function AulasCanto() {
     
     let MIN_SAMPLES = 0;
     let MAX_SAMPLES = Math.floor(SIZE / 2);
-    let GOOD_ENOUGH_CORRELATION = 0.9; // Exigência de 90% de certeza do algoritmo
+    let GOOD_ENOUGH_CORRELATION = 0.9;
 
     for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
       let correlation = 0;
@@ -238,7 +237,7 @@ export default function AulasCanto() {
     return -1;
   }
 
-  // IA Chat - Modificado para usar a API da Vercel
+  // IA Chat
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     const userMsg = { role: "user", content: input };
@@ -261,14 +260,13 @@ export default function AulasCanto() {
     setLoading(false);
   };
 
-  // Calcula a precisão de 0% (muito desafinado) a 100% (perfeito)
   const accuracy = pitch ? Math.max(0, 100 - (Math.abs(pitch.cents) * 2)) : 0;
 
   const getTunerColor = (acc) => {
     if (!pitch) return "#888";
-    if (acc < 50) return "#f87171"; // Vermelho
-    if (acc < 90) return "#facc15"; // Amarelo
-    return "#4ade80"; // Verde
+    if (acc < 50) return "#f87171";
+    if (acc < 90) return "#facc15";
+    return "#4ade80";
   };
 
   const getTunerLabel = (acc, cents) => {
