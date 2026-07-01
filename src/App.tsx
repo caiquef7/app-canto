@@ -76,6 +76,7 @@ const EXERCICIOS = [
 ];
 
 const NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const FREQ_BASE = { A4: 440 };
 
 function getFrequency(note, octave) {
   const semitones = NOTAS.indexOf(note) - NOTAS.indexOf("A") + (octave - 4) * 12;
@@ -93,6 +94,7 @@ function detectNote(frequency) {
 }
 
 export default function AulasCanto() {
+  const [showWelcome, setShowWelcome] = useState(true);
   const [section, setSection] = useState("Aulas");
   const [aulaAberta, setAulaAberta] = useState(null);
   const [exAtivo, setExAtivo] = useState(null);
@@ -100,24 +102,11 @@ export default function AulasCanto() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [pitch, setPitch] = useState(null);
   const [afinando, setAfinando] = useState(false);
-  
-  const [messages, setMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem("vox_chat_history");
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [
-      { role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }
-    ];
-  });
-
-  useEffect(() => {
-    localStorage.setItem("vox_chat_history", JSON.stringify(messages));
-  }, [messages]);
-
+  const [messages, setMessages] = useState([
+    { role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }
+  ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  
   const audioCtxRef = useRef(null);
   const analyserRef = useRef(null);
   const micStreamRef = useRef(null);
@@ -158,9 +147,7 @@ export default function AulasCanto() {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtxRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioCtxRef.current.createAnalyser();
-      
-      analyserRef.current.fftSize = 8192; 
-      
+      analyserRef.current.fftSize = 2048;
       source.connect(analyserRef.current);
       setAfinando(true);
       detectPitch();
@@ -179,7 +166,6 @@ export default function AulasCanto() {
 
   const detectPitch = () => {
     const analyser = analyserRef.current;
-    if (!analyser) return;
     const buffer = new Float32Array(analyser.fftSize);
     const tick = () => {
       analyser.getFloatTimeDomainData(buffer);
@@ -193,48 +179,24 @@ export default function AulasCanto() {
   function autoCorrelate(buffer, sampleRate) {
     let SIZE = buffer.length;
     let rms = 0;
-
-    for (let i = 0; i < SIZE; i++) {
-      let val = buffer[i];
-      rms += val * val;
-    }
+    for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
     rms = Math.sqrt(rms / SIZE);
     if (rms < 0.01) return -1;
-
-    let best_offset = -1;
-    let best_correlation = 0;
-    let foundGoodCorrelation = false;
-    let correlations = new Array(SIZE).fill(0);
-    let lastCorrelation = 1;
-    
-    let MIN_SAMPLES = 0;
-    let MAX_SAMPLES = Math.floor(SIZE / 2);
-    let GOOD_ENOUGH_CORRELATION = 0.9;
-
-    for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
-      let correlation = 0;
-      for (let i = 0; i < MAX_SAMPLES; i++) {
-        correlation += Math.abs(buffer[i] - buffer[i + offset]);
-      }
-      correlation = 1 - (correlation / MAX_SAMPLES);
-      correlations[offset] = correlation;
-
-      if ((correlation > GOOD_ENOUGH_CORRELATION) && (correlation > lastCorrelation)) {
-        foundGoodCorrelation = true;
-        if (correlation > best_correlation) {
-          best_correlation = correlation;
-          best_offset = offset;
-        }
-      } else if (foundGoodCorrelation) {
-        let shift = (correlations[best_offset + 1] - correlations[best_offset - 1]) / correlations[best_offset];
-        return sampleRate / (best_offset + (8 * shift));
-      }
-      lastCorrelation = correlation;
-    }
-    if (best_correlation > 0.01) {
-      return sampleRate / best_offset;
-    }
-    return -1;
+    let r1 = 0, r2 = SIZE - 1;
+    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buffer[i]) < 0.2) { r1 = i; break; }
+    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buffer[SIZE - i]) < 0.2) { r2 = SIZE - i; break; }
+    buffer = buffer.slice(r1, r2);
+    SIZE = buffer.length;
+    const c = new Array(SIZE).fill(0);
+    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buffer[j] * buffer[j + i];
+    let d = 0; while (c[d] > c[d + 1]) d++;
+    let maxval = -1, maxpos = -1;
+    for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+    let T0 = maxpos;
+    const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    const a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
+    if (a) T0 -= b / (2 * a);
+    return sampleRate / T0;
   }
 
   // IA Chat
@@ -246,43 +208,107 @@ export default function AulasCanto() {
     setInput("");
     setLoading(true);
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "Você é uma professora de canto experiente, carinhosa e motivadora chamada Maria Diniz. Responda sempre em português brasileiro. Dê conselhos práticos sobre técnica vocal, exercícios, respiração, postura, e interpretação musical. Seja encorajadora e use emojis com moderação. Mantenha respostas concisas e úteis.",
+          messages: newMessages,
+        }),
       });
       const data = await res.json();
-      const reply = data.reply || "Desculpa, não consegui responder agora.";
+      const reply = data.content?.map(b => b.text || "").join("") || "Desculpa, não consegui responder agora.";
       setMessages(m => [...m, { role: "assistant", content: reply }]);
     } catch {
-      setMessages(m => [...m, { role: "assistant", content: "Ops, tive um problema de conexão com a IA. Verifique se configurou a API Key no Vercel!" }]);
+      setMessages(m => [...m, { role: "assistant", content: "Ops, tive um problema técnico. Tente novamente!" }]);
     }
     setLoading(false);
   };
 
-  const accuracy = pitch ? Math.max(0, 100 - (Math.abs(pitch.cents) * 2)) : 0;
-
-  const getTunerColor = (acc) => {
-    if (!pitch) return "#888";
-    if (acc < 50) return "#f87171";
-    if (acc < 90) return "#facc15";
-    return "#4ade80";
+  const centsColor = (cents) => {
+    if (!cents && cents !== 0) return "#888";
+    const abs = Math.abs(cents);
+    if (abs < 10) return "#4ade80";
+    if (abs < 25) return "#facc15";
+    return "#f87171";
   };
 
-  const getTunerLabel = (acc, cents) => {
-    if (!pitch) return afinando ? "Aguardando nota..." : "Inicie o afinador";
-    if (acc >= 90) return "Perfeito! 🎯";
-    if (cents > 0) return "Muito agudo (cante mais grave) 👇";
-    return "Muito grave (cante mais agudo) 👆";
+  const centsLabel = (cents) => {
+    if (!cents && cents !== 0) return "";
+    if (Math.abs(cents) < 10) return "Afinado! 🎯";
+    if (cents > 0) return `+${cents}¢ (alto demais)`;
+    return `${cents}¢ (baixo demais)`;
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f0c1a 0%, #1a0f2e 50%, #0f1a2e 100%)", fontFamily: "'Georgia', serif", color: "#f0e6ff" }}>
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0f0c1a 0%, #1a0f2e 50%, #0f1a2e 100%)",
+      fontFamily: "'Georgia', serif",
+      color: "#f0e6ff",
+    }}>
+      {/* Modal de Boas-vindas */}
+      {showWelcome && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(10,6,20,0.75)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 999,
+          padding: 24,
+        }}>
+          <div style={{
+            background: "linear-gradient(160deg, #1a0f2e, #150c26)",
+            border: "1px solid rgba(180,120,255,0.25)",
+            borderRadius: 24,
+            padding: "36px 28px",
+            maxWidth: 420,
+            width: "100%",
+            textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🎤</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: "#e0c8ff", marginBottom: 14 }}>Boas vindas</div>
+            <div style={{ color: "#c0b0d8", lineHeight: 1.7, fontSize: 15, marginBottom: 24 }}>
+              Bem-vindo ao seu app de canto! Aqui você pratica técnica vocal, afinação, respiração e interpretação — tudo cronometrado. Anota seu desenvolvimento, repertório e tons favoritos. E tem uma assistente IA para responder todas as suas dúvidas sobre técnica e Canto. Bons treinos!
+            </div>
+            <button onClick={() => setShowWelcome(false)} style={{
+              background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+              border: "none",
+              color: "#fff",
+              borderRadius: 24,
+              padding: "12px 36px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: 15,
+              fontWeight: "bold",
+              boxShadow: "0 8px 24px rgba(168,85,247,0.4)",
+            }}>Começar</button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(180,120,255,0.2)", padding: "20px 24px", display: "flex", alignItems: "center", gap: 16, position: "sticky", top: 0, zIndex: 100 }}>
+      <div style={{
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(180,120,255,0.2)",
+        padding: "20px 24px",
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+      }}>
         <span style={{ fontSize: 32 }}>🎤</span>
         <div>
-          <div style={{ fontSize: 22, fontWeight: "bold", letterSpacing: 1, color: "#e0c8ff" }}>App de Canto - Maria Diniz</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", letterSpacing: 1, color: "#e0c8ff" }}>VoxStudio</div>
           <div style={{ fontSize: 12, color: "#a085cc", letterSpacing: 2 }}>AULAS DE CANTO</div>
         </div>
       </div>
@@ -294,8 +320,14 @@ export default function AulasCanto() {
             background: section === s ? "linear-gradient(135deg, #7c3aed, #a855f7)" : "rgba(255,255,255,0.06)",
             color: section === s ? "#fff" : "#c0a0e0",
             border: section === s ? "none" : "1px solid rgba(180,120,255,0.2)",
-            borderRadius: 24, padding: "10px 20px", cursor: "pointer", fontFamily: "inherit", fontSize: 14, whiteSpace: "nowrap",
-            fontWeight: section === s ? "bold" : "normal", transition: "all 0.2s",
+            borderRadius: 24,
+            padding: "10px 20px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            fontSize: 14,
+            whiteSpace: "nowrap",
+            fontWeight: section === s ? "bold" : "normal",
+            transition: "all 0.2s",
             boxShadow: section === s ? "0 4px 20px rgba(168,85,247,0.4)" : "none",
           }}>{s}</button>
         ))}
@@ -308,7 +340,10 @@ export default function AulasCanto() {
           <div>
             {aulaAberta ? (
               <div>
-                <button onClick={() => setAulaAberta(null)} style={{ background: "none", border: "1px solid rgba(180,120,255,0.3)", color: "#c0a0e0", borderRadius: 20, padding: "8px 16px", cursor: "pointer", fontFamily: "inherit", marginBottom: 20 }}>← Voltar</button>
+                <button onClick={() => setAulaAberta(null)} style={{
+                  background: "none", border: "1px solid rgba(180,120,255,0.3)", color: "#c0a0e0",
+                  borderRadius: 20, padding: "8px 16px", cursor: "pointer", fontFamily: "inherit", marginBottom: 20
+                }}>← Voltar</button>
                 <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 20, padding: 24, border: "1px solid rgba(180,120,255,0.15)" }}>
                   <div style={{ fontSize: 40, marginBottom: 8 }}>{aulaAberta.emoji}</div>
                   <div style={{ fontSize: 22, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>{aulaAberta.titulo}</div>
@@ -335,8 +370,19 @@ export default function AulasCanto() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   {AULAS.map(a => (
                     <div key={a.id} onClick={() => setAulaAberta(a)} style={{
-                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 18, padding: 20, cursor: "pointer", transition: "all 0.2s", display: "flex", gap: 16, alignItems: "center",
-                    }} onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(180,120,255,0.15)",
+                      borderRadius: 18,
+                      padding: 20,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      display: "flex",
+                      gap: 16,
+                      alignItems: "center",
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                    >
                       <div style={{ fontSize: 36 }}>{a.emoji}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>{a.titulo}</div>
@@ -364,14 +410,21 @@ export default function AulasCanto() {
                 <div style={{ fontSize: 24, fontWeight: "bold", color: "#e0c8ff", marginBottom: 8 }}>{exAtivo.nome}</div>
                 <div style={{ color: "#a085cc", marginBottom: 24, lineHeight: 1.6 }}>{exAtivo.instrucao}</div>
                 <div style={{
-                  width: 160, height: 160, borderRadius: "50%", margin: "0 auto 24px", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  boxShadow: timerRunning ? "0 0 70px rgba(168,85,247,0.8)" : "0 0 40px rgba(168,85,247,0.5)", transition: "box-shadow 0.5s",
+                  width: 160, height: 160, borderRadius: "50%", margin: "0 auto 24px",
+                  background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 0 40px rgba(168,85,247,0.5)",
+                  animation: timerRunning ? "pulse 2s infinite" : "none",
                 }}>
+                  <style>{`@keyframes pulse { 0%,100%{box-shadow:0 0 40px rgba(168,85,247,0.5)} 50%{box-shadow:0 0 70px rgba(168,85,247,0.8)} }`}</style>
                   <div style={{ fontSize: 48, fontWeight: "bold" }}>{timer}</div>
                   <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>segundos</div>
                 </div>
                 {timer === 0 && <div style={{ color: "#4ade80", fontSize: 18, marginBottom: 16 }}>✅ Exercício concluído!</div>}
-                <button onClick={stopExercicio} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#f0e6ff", borderRadius: 24, padding: "12px 32px", cursor: "pointer", fontFamily: "inherit", fontSize: 16 }}>← Voltar</button>
+                <button onClick={stopExercicio} style={{
+                  background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)",
+                  color: "#f0e6ff", borderRadius: 24, padding: "12px 32px", cursor: "pointer", fontFamily: "inherit", fontSize: 16
+                }}>← Voltar</button>
               </div>
             ) : (
               <div>
@@ -381,13 +434,28 @@ export default function AulasCanto() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {EXERCICIOS.map(ex => (
-                    <div key={ex.id} onClick={() => startExercicio(ex)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 16, padding: "16px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
+                    <div key={ex.id} onClick={() => startExercicio(ex)} style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(180,120,255,0.15)",
+                      borderRadius: 16,
+                      padding: "16px 20px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 16,
+                      transition: "all 0.2s",
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                    >
                       <span style={{ fontSize: 32 }}>{ex.emoji}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: "bold", color: "#e0c8ff", marginBottom: 2 }}>{ex.nome}</div>
                         <div style={{ color: "#a085cc", fontSize: 13 }}>{ex.descricao}</div>
                       </div>
-                      <div style={{ background: "rgba(124,58,237,0.3)", color: "#c0a0e0", borderRadius: 12, padding: "4px 12px", fontSize: 13, whiteSpace: "nowrap" }}>{ex.duracao}s</div>
+                      <div style={{ background: "rgba(124,58,237,0.3)", color: "#c0a0e0", borderRadius: 12, padding: "4px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
+                        {ex.duracao}s
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -401,66 +469,106 @@ export default function AulasCanto() {
           <div style={{ textAlign: "center" }}>
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>Afinador de Voz</div>
-              <div style={{ color: "#a085cc", fontSize: 14 }}>Cante uma nota e faça o medidor chegar no verde!</div>
+              <div style={{ color: "#a085cc", fontSize: 14 }}>Cante uma nota e veja se está afinado</div>
             </div>
-            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(180,120,255,0.2)", borderRadius: 28, padding: 32, marginBottom: 24 }}>
-              <div style={{ fontSize: 80, fontWeight: "bold", color: pitch ? getTunerColor(accuracy) : "#3a3050", marginBottom: 8, minHeight: 100, display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.3s" }}>
+
+            {/* Display principal */}
+            <div style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(180,120,255,0.2)",
+              borderRadius: 28,
+              padding: 32,
+              marginBottom: 24,
+            }}>
+              <div style={{ fontSize: 80, fontWeight: "bold", color: pitch ? centsColor(pitch.cents) : "#3a3050", marginBottom: 8, minHeight: 100, display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.3s" }}>
                 {pitch ? pitch.note : "—"}
               </div>
-              {pitch && <div style={{ color: "#a085cc", fontSize: 14, marginBottom: 4 }}>Oitava {pitch.octave} • {Math.round(pitch.frequency)} Hz</div>}
-              
-              <div style={{ color: getTunerColor(accuracy), fontSize: 16, minHeight: 28, fontWeight: "bold" }}>
-                {getTunerLabel(accuracy, pitch?.cents)}
+              {pitch && (
+                <div style={{ color: "#a085cc", fontSize: 14, marginBottom: 4 }}>
+                  Oitava {pitch.octave} • {Math.round(pitch.frequency)} Hz
+                </div>
+              )}
+              <div style={{ color: centsColor(pitch?.cents), fontSize: 16, minHeight: 28, fontWeight: "bold" }}>
+                {pitch ? centsLabel(pitch.cents) : (afinando ? "Aguardando nota..." : "Inicie o afinador")}
               </div>
 
+              {/* Barra de cents */}
               {pitch && (
                 <div style={{ marginTop: 24 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", color: "#6b5080", fontSize: 11, marginBottom: 8, fontWeight: "bold" }}>
-                    <span>Desafinado</span>
-                    <span>Quase lá</span>
-                    <span>Top!</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: "#6b5080", fontSize: 11, marginBottom: 8 }}>
+                    <span>-50¢</span><span>0</span><span>+50¢</span>
                   </div>
-                  <div style={{ position: "relative", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 8, overflow: "visible" }}>
-                    {/* Barra de fundo acompanhando a bolinha */}
-                    <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${accuracy}%`, background: getTunerColor(accuracy), opacity: 0.3, borderRadius: 8, transition: "width 0.1s, background 0.3s" }} />
-                    
-                    {/* Bolinha indicadora (medidor) */}
-                    <div style={{ position: "absolute", left: `${accuracy}%`, top: -4, width: 24, height: 24, background: getTunerColor(accuracy), borderRadius: "50%", transform: "translateX(-50%)", boxShadow: `0 0 12px ${getTunerColor(accuracy)}`, transition: "left 0.1s, background 0.3s" }} />
+                  <div style={{ position: "relative", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 8 }}>
+                    <div style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: 0,
+                      width: 4,
+                      height: "100%",
+                      background: "rgba(255,255,255,0.2)",
+                      transform: "translateX(-50%)",
+                    }} />
+                    <div style={{
+                      position: "absolute",
+                      left: `${50 + Math.max(-50, Math.min(50, pitch.cents))}%`,
+                      top: -4,
+                      width: 24,
+                      height: 24,
+                      background: centsColor(pitch.cents),
+                      borderRadius: "50%",
+                      transform: "translateX(-50%)",
+                      boxShadow: `0 0 12px ${centsColor(pitch.cents)}`,
+                      transition: "left 0.1s",
+                    }} />
                   </div>
                 </div>
               )}
             </div>
-            <button onClick={afinando ? stopAfinador : startAfinador} style={{ background: afinando ? "rgba(248,113,113,0.2)" : "linear-gradient(135deg,#7c3aed,#a855f7)", border: afinando ? "1px solid rgba(248,113,113,0.5)" : "none", color: "#fff", borderRadius: 28, padding: "16px 48px", cursor: "pointer", fontFamily: "inherit", fontSize: 18, boxShadow: afinando ? "none" : "0 8px 24px rgba(168,85,247,0.4)" }}>
+
+            <button onClick={afinando ? stopAfinador : startAfinador} style={{
+              background: afinando ? "rgba(248,113,113,0.2)" : "linear-gradient(135deg,#7c3aed,#a855f7)",
+              border: afinando ? "1px solid rgba(248,113,113,0.5)" : "none",
+              color: "#fff",
+              borderRadius: 28,
+              padding: "16px 48px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: 18,
+              boxShadow: afinando ? "none" : "0 8px 24px rgba(168,85,247,0.4)",
+            }}>
               {afinando ? "⏹ Parar" : "🎙 Iniciar Afinador"}
             </button>
-            <div style={{ color: "#6b5080", fontSize: 12, marginTop: 12 }}>Requer permissão de microfone</div>
+            <div style={{ color: "#6b5080", fontSize: 12, marginTop: 12 }}>
+              Requer permissão de microfone
+            </div>
           </div>
         )}
 
         {/* ===== IA PROFESSORA ===== */}
         {section === "IA Professora" && (
           <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)" }}>
-            <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 2 }}>🎤 Professora Maria Diniz</div>
-                <div style={{ color: "#a085cc", fontSize: 13 }}>IA especialista em técnica vocal</div>
-              </div>
-              
-              {messages.length > 1 && (
-                <button onClick={() => {
-                  if(window.confirm("Apagar todo o histórico de conversa com a professora?")) {
-                    setMessages([{ role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }]);
-                  }
-                }} style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171", borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer", transition: "all 0.2s" }}>
-                  🗑️ Limpar Chat
-                </button>
-              )}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 2 }}>🎤 Professora Maria Diniz</div>
+              <div style={{ color: "#a085cc", fontSize: 13 }}>IA especialista em técnica vocal</div>
             </div>
+
+            {/* Chat */}
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16 }}>
               {messages.map((m, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-                  {m.role === "assistant" && <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginRight: 8, flexShrink: 0 }}>🎤</div>}
-                  <div style={{ background: m.role === "user" ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "rgba(255,255,255,0.07)", color: "#f0e6ff", borderRadius: m.role === "user" ? "20px 20px 4px 20px" : "20px 20px 20px 4px", padding: "12px 16px", maxWidth: "78%", fontSize: 14, lineHeight: 1.6, border: m.role === "assistant" ? "1px solid rgba(180,120,255,0.15)" : "none" }}>
+                  {m.role === "assistant" && (
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginRight: 8, flexShrink: 0 }}>🎤</div>
+                  )}
+                  <div style={{
+                    background: m.role === "user" ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "rgba(255,255,255,0.07)",
+                    color: "#f0e6ff",
+                    borderRadius: m.role === "user" ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
+                    padding: "12px 16px",
+                    maxWidth: "78%",
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    border: m.role === "assistant" ? "1px solid rgba(180,120,255,0.15)" : "none",
+                  }}>
                     {m.content}
                   </div>
                 </div>
@@ -469,15 +577,48 @@ export default function AulasCanto() {
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center" }}>🎤</div>
                   <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "20px 20px 20px 4px", padding: "12px 20px", border: "1px solid rgba(180,120,255,0.15)" }}>
-                    Digitando...
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[0, 1, 2].map(i => (
+                        <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#a855f7", animation: `bounce 1s ${i * 0.2}s infinite` }} />
+                      ))}
+                      <style>{`@keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}`}</style>
+                    </div>
                   </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
+
+            {/* Input */}
             <div style={{ display: "flex", gap: 10, paddingTop: 12, borderTop: "1px solid rgba(180,120,255,0.15)" }}>
-              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Pergunte sobre técnica vocal..." style={{ flex: 1, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(180,120,255,0.2)", borderRadius: 24, padding: "12px 20px", color: "#f0e6ff", fontFamily: "inherit", fontSize: 14, outline: "none" }} />
-              <button onClick={sendMessage} disabled={loading || !input.trim()} style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", border: "none", borderRadius: "50%", width: 48, height: 48, cursor: "pointer", fontSize: 20, flexShrink: 0, opacity: loading || !input.trim() ? 0.5 : 1 }}>➤</button>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && sendMessage()}
+                placeholder="Pergunte sobre técnica vocal..."
+                style={{
+                  flex: 1,
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(180,120,255,0.2)",
+                  borderRadius: 24,
+                  padding: "12px 20px",
+                  color: "#f0e6ff",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  outline: "none",
+                }}
+              />
+              <button onClick={sendMessage} disabled={loading || !input.trim()} style={{
+                background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                border: "none",
+                borderRadius: "50%",
+                width: 48,
+                height: 48,
+                cursor: "pointer",
+                fontSize: 20,
+                flexShrink: 0,
+                opacity: loading || !input.trim() ? 0.5 : 1,
+              }}>➤</button>
             </div>
           </div>
         )}
