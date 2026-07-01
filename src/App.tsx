@@ -208,21 +208,16 @@ export default function AulasCanto() {
     setInput("");
     setLoading(true);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: "Você é uma professora de canto experiente, carinhosa e motivadora chamada Maria Diniz. Responda sempre em português brasileiro. Dê conselhos práticos sobre técnica vocal, exercícios, respiração, postura, e interpretação musical. Seja encorajadora e use emojis com moderação. Mantenha respostas concisas e úteis.",
-          messages: newMessages,
-        }),
+        body: JSON.stringify({ messages: newMessages }),
       });
       const data = await res.json();
-      const reply = data.content?.map(b => b.text || "").join("") || "Desculpa, não consegui responder agora.";
+      const reply = data.reply || "Desculpa, não consegui responder agora.";
       setMessages(m => [...m, { role: "assistant", content: reply }]);
     } catch {
-      setMessages(m => [...m, { role: "assistant", content: "Ops, tive um problema técnico. Tente novamente!" }]);
+      setMessages(m => [...m, { role: "assistant", content: "Ops, tive um problema de conexão com a IA. Verifique se configurou a API Key no Vercel!" }]);
     }
     setLoading(false);
   };
