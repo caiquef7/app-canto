@@ -212,7 +212,7 @@ export default function AulasCanto() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 1000,
           system: "Você é uma professora de canto experiente, carinhosa e motivadora chamada Maria Diniz. Responda sempre em português brasileiro. Dê conselhos práticos sobre técnica vocal, exercícios, respiração, postura, e interpretação musical. Seja encorajadora e use emojis com moderação. Mantenha respostas concisas e úteis.",
           messages: newMessages,
