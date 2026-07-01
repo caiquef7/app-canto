@@ -312,8 +312,8 @@ export default function AulasCanto() {
       }}>
         <span style={{ fontSize: 32 }}>🎤</span>
         <div>
-          <div style={{ fontSize: 22, fontWeight: "bold", letterSpacing: 1, color: "#e0c8ff" }}>VoxStudio</div>
-          <div style={{ fontSize: 12, color: "#a085cc", letterSpacing: 2 }}>AULAS DE CANTO</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", letterSpacing: 1, color: "#e0c8ff" }}>MARIA DINIZ</div>
+          <div style={{ fontSize: 12, color: "#a085cc", letterSpacing: 2 }}>APP DE CANTO</div>
         </div>
       </div>
 
