@@ -94,7 +94,13 @@ function detectNote(frequency) {
 }
 
 export default function AulasCanto() {
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    try {
+      return !localStorage.getItem("vox_welcome_seen");
+    } catch (e) {
+      return true;
+    }
+  });
   const [section, setSection] = useState("Aulas");
   const [aulaAberta, setAulaAberta] = useState(null);
   const [exAtivo, setExAtivo] = useState(null);
@@ -272,7 +278,10 @@ export default function AulasCanto() {
             <div style={{ color: "#c0b0d8", lineHeight: 1.7, fontSize: 15, marginBottom: 24 }}>
               Bem-vindo ao seu app de canto! Aqui você pratica técnica vocal, afinação, respiração e interpretação — tudo cronometrado. Anota seu desenvolvimento, repertório e tons favoritos. E tem uma assistente IA para responder todas as suas dúvidas sobre técnica e Canto. Bons treinos!
             </div>
-            <button onClick={() => setShowWelcome(false)} style={{
+            <button onClick={() => {
+              try { localStorage.setItem("vox_welcome_seen", "1"); } catch (e) {}
+              setShowWelcome(false);
+            }} style={{
               background: "linear-gradient(135deg,#7c3aed,#a855f7)",
               border: "none",
               color: "#fff",
