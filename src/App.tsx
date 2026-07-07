@@ -8,7 +8,7 @@ const AULAS = [
     id: 1,
     titulo: "Respiração Diafragmática",
     nivel: "Iniciante",
-    duracao: "15 min",
+    duracao: "5 min",
     emoji: "🌬️",
     descricao: "A base de tudo no canto é a respiração correta. Aprenda a usar o diafragma como motor da sua voz.",
     topicos: [
@@ -23,7 +23,7 @@ const AULAS = [
     id: 2,
     titulo: "Postura e Ressonância",
     nivel: "Iniciante",
-    duracao: "20 min",
+    duracao: "5 min",
     emoji: "🧍",
     descricao: "Seu corpo é o instrumento. Postura correta libera a ressonância natural da sua voz.",
     topicos: [
@@ -38,7 +38,7 @@ const AULAS = [
     id: 3,
     titulo: "Extensão Vocal e Registros",
     nivel: "Intermediário",
-    duracao: "30 min",
+    duracao: "5 min",
     emoji: "🎵",
     descricao: "Entenda voz de peito, voz de cabeça e como fazer a passagem (passaggio) sem quebrar.",
     topicos: [
@@ -53,7 +53,7 @@ const AULAS = [
     id: 4,
     titulo: "Interpretação e Emoção",
     nivel: "Avançado",
-    duracao: "25 min",
+    duracao: "5 min",
     emoji: "🎭",
     descricao: "Técnica sem emoção é vazia. Aprenda a contar histórias com a sua voz.",
     topicos: [
@@ -67,16 +67,21 @@ const AULAS = [
 ];
 
 const EXERCICIOS = [
-  { id: 1, nome: "Sirene", descricao: "Glissando do grave ao agudo em 'wooo'", duracao: 30, emoji: "🚨", instrucao: "Faça um som de sirene, subindo do grave ao agudo e voltando suavemente. Mantenha a boca relaxada." },
-  { id: 2, nome: "Lip Trill", descricao: "Vibração dos lábios em escala", duracao: 45, emoji: "💋", instrucao: "Solte os lábios vibrando como um motor enquanto canta uma escala. Ajuda a relaxar a laringe." },
-  { id: 3, nome: "Vocalise Mi-Ma-Mo", descricao: "Articulação e abertura da boca", duracao: 60, emoji: "🗣️", instrucao: "Cante 'mi-ma-mo' em cada nota de uma escala. Exagere na abertura da boca no 'ma'." },
-  { id: 4, nome: "Escala de Dó", descricao: "Escala maior ascendente e descendente", duracao: 90, emoji: "🎼", instrucao: "Sobe: Dó Ré Mi Fá Sol Lá Si Dó. Desce: Dó Si Lá Sol Fá Mi Ré Dó. Use vogal 'A' aberta." },
-  { id: 5, nome: "Staccato", descricao: "Notas curtas e articuladas em 'ha'", duracao: 45, emoji: "⚡", instrucao: "Cante 'ha-ha-ha-ha-ha' rápido e articulado, cada nota separada. Fortalece o suporte do diafragma." },
-  { id: 6, nome: "Messa di Voce", descricao: "Crescendo e decrescendo em uma nota", duracao: 60, emoji: "🌊", instrucao: "Sustente uma nota começando suave (piano), aumente até forte (forte), depois volte ao suave. Controle total do fôlego." },
+  { id: 1, nome: "Sirene", descricao: "Glissando do grave ao agudo em 'wooo'", duracao: 300, emoji: "🚨", instrucao: "Faça um som de sirene, subindo do grave ao agudo e voltando suavemente. Mantenha a boca relaxada." },
+  { id: 2, nome: "Lip Trill", descricao: "Vibração dos lábios em escala", duracao: 300, emoji: "💋", instrucao: "Solte os lábios vibrando como um motor enquanto canta uma escala. Ajuda a relaxar a laringe." },
+  { id: 3, nome: "Vocalise Mi-Ma-Mo", descricao: "Articulação e abertura da boca", duracao: 300, emoji: "🗣️", instrucao: "Cante 'mi-ma-mo' em cada nota de uma escala. Exagere na abertura da boca no 'ma'." },
+  { id: 4, nome: "Escala de Dó", descricao: "Escala maior ascendente e descendente", duracao: 300, emoji: "🎼", instrucao: "Sobe: Dó Ré Mi Fá Sol Lá Si Dó. Desce: Dó Si Lá Sol Fá Mi Ré Dó. Use vogal 'A' aberta." },
+  { id: 5, nome: "Staccato", descricao: "Notas curtas e articuladas em 'ha'", duracao: 300, emoji: "⚡", instrucao: "Cante 'ha-ha-ha-ha-ha' rápido e articulado, cada nota separada. Fortalece o suporte do diafragma." },
+  { id: 6, nome: "Messa di Voce", descricao: "Crescendo e decrescendo em uma nota", duracao: 300, emoji: "🌊", instrucao: "Sustente uma nota começando suave (piano), aumente até forte (forte), depois volte ao suave. Controle total do fôlego." },
 ];
 
 const NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const FREQ_BASE = { A4: 440 };
+
+function formatTime(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
 function getFrequency(note, octave) {
   const semitones = NOTAS.indexOf(note) - NOTAS.indexOf("A") + (octave - 4) * 12;
@@ -119,6 +124,7 @@ export default function AulasCanto() {
   const rafRef = useRef(null);
   const timerRef = useRef(null);
   const chatEndRef = useRef(null);
+  const freqHistoryRef = useRef([]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -153,8 +159,10 @@ export default function AulasCanto() {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtxRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioCtxRef.current.createAnalyser();
-      analyserRef.current.fftSize = 2048;
+      analyserRef.current.fftSize = 4096;
+      analyserRef.current.smoothingTimeConstant = 0.2;
       source.connect(analyserRef.current);
+      freqHistoryRef.current = [];
       setAfinando(true);
       detectPitch();
     } catch (e) {
@@ -166,6 +174,7 @@ export default function AulasCanto() {
     cancelAnimationFrame(rafRef.current);
     micStreamRef.current?.getTracks().forEach(t => t.stop());
     audioCtxRef.current?.close();
+    freqHistoryRef.current = [];
     setAfinando(false);
     setPitch(null);
   };
@@ -176,7 +185,24 @@ export default function AulasCanto() {
     const tick = () => {
       analyser.getFloatTimeDomainData(buffer);
       const freq = autoCorrelate(buffer, audioCtxRef.current.sampleRate);
-      setPitch(freq > 0 ? detectNote(freq) : null);
+
+      if (freq > 0) {
+        const hist = freqHistoryRef.current;
+        hist.push(freq);
+        if (hist.length > 8) hist.shift();
+
+        // usa a mediana das últimas leituras pra evitar tremedeira/saltos de oitava
+        const sorted = [...hist].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+
+        // só aceita a leitura se ela não for um salto absurdo comparado à mediana recente
+        if (hist.length < 3 || Math.abs(1200 * Math.log2(freq / median)) < 150) {
+          setPitch(detectNote(median));
+        }
+      } else {
+        freqHistoryRef.current = [];
+        setPitch(null);
+      }
       rafRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -187,22 +213,51 @@ export default function AulasCanto() {
     let rms = 0;
     for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) return -1;
+    if (rms < 0.015) return -1;
+
     let r1 = 0, r2 = SIZE - 1;
-    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buffer[i]) < 0.2) { r1 = i; break; }
-    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buffer[SIZE - i]) < 0.2) { r2 = SIZE - i; break; }
+    const thres = 0.2;
+    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buffer[i]) < thres) { r1 = i; break; }
+    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buffer[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+
     buffer = buffer.slice(r1, r2);
     SIZE = buffer.length;
+    if (SIZE < 8) return -1;
+
     const c = new Array(SIZE).fill(0);
-    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buffer[j] * buffer[j + i];
-    let d = 0; while (c[d] > c[d + 1]) d++;
+    for (let i = 0; i < SIZE; i++) {
+      for (let j = 0; j < SIZE - i; j++) {
+        c[i] += buffer[j] * buffer[j + i];
+      }
+    }
+
+    let d = 0;
+    while (d + 1 < SIZE && c[d] > c[d + 1]) d++;
+
     let maxval = -1, maxpos = -1;
-    for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+    for (let i = d; i < SIZE; i++) {
+      if (c[i] > maxval) {
+        maxval = c[i];
+        maxpos = i;
+      }
+    }
+
+    if (maxpos <= 0) return -1;
+
     let T0 = maxpos;
-    const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-    const a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
-    if (a) T0 -= b / (2 * a);
-    return sampleRate / T0;
+    const x1 = c[T0 - 1] ?? c[T0];
+    const x2 = c[T0];
+    const x3 = c[T0 + 1] ?? c[T0];
+    const a = (x1 + x3 - 2 * x2) / 2;
+    const b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+
+    const freqOut = sampleRate / T0;
+
+    // faixa vocal humana plausível — descarta oitavas erradas / ruído
+    if (freqOut < 70 || freqOut > 1100) return -1;
+
+    return freqOut;
   }
 
   // IA Chat
@@ -421,8 +476,8 @@ export default function AulasCanto() {
                   animation: timerRunning ? "pulse 2s infinite" : "none",
                 }}>
                   <style>{`@keyframes pulse { 0%,100%{box-shadow:0 0 40px rgba(168,85,247,0.5)} 50%{box-shadow:0 0 70px rgba(168,85,247,0.8)} }`}</style>
-                  <div style={{ fontSize: 48, fontWeight: "bold" }}>{timer}</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>segundos</div>
+                  <div style={{ fontSize: 40, fontWeight: "bold" }}>{formatTime(timer)}</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>restantes</div>
                 </div>
                 {timer === 0 && <div style={{ color: "#4ade80", fontSize: 18, marginBottom: 16 }}>✅ Exercício concluído!</div>}
                 <button onClick={stopExercicio} style={{
@@ -458,7 +513,7 @@ export default function AulasCanto() {
                         <div style={{ color: "#a085cc", fontSize: 13 }}>{ex.descricao}</div>
                       </div>
                       <div style={{ background: "rgba(124,58,237,0.3)", color: "#c0a0e0", borderRadius: 12, padding: "4px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
-                        {ex.duracao}s
+                        {formatTime(ex.duracao)}
                       </div>
                     </div>
                   ))}
@@ -484,7 +539,7 @@ export default function AulasCanto() {
               padding: 32,
               marginBottom: 24,
             }}>
-              <div style={{ fontSize: 80, fontWeight: "bold", color: pitch ? centsColor(pitch.cents) : "#3a3050", marginBottom: 8, minHeight: 100, display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.3s" }}>
+              <div style={{ fontSize: 80, fontWeight: "bold", color: pitch ? centsColor(pitch.cents) : "#3a3050", marginBottom: 8, minHeight: 100, display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.15s" }}>
                 {pitch ? pitch.note : "—"}
               </div>
               {pitch && (
@@ -502,19 +557,19 @@ export default function AulasCanto() {
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#6b5080", fontSize: 11, marginBottom: 8 }}>
                     <span>-50¢</span><span>0</span><span>+50¢</span>
                   </div>
-                  <div style={{ position: "relative", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 8 }}>
+                  <div style={{ position: "relative", height: 16, background: "rgba(255,255,255,0.08)", borderRadius: 8, overflow: "visible" }}>
                     <div style={{
                       position: "absolute",
                       left: "50%",
                       top: 0,
                       width: 4,
                       height: "100%",
-                      background: "rgba(255,255,255,0.2)",
+                      background: "rgba(255,255,255,0.25)",
                       transform: "translateX(-50%)",
                     }} />
                     <div style={{
                       position: "absolute",
-                      left: `${50 + Math.max(-50, Math.min(50, pitch.cents))}%`,
+                      left: `${50 + (Math.max(-50, Math.min(50, pitch.cents)) / 50) * 50}%`,
                       top: -4,
                       width: 24,
                       height: 24,
@@ -522,7 +577,7 @@ export default function AulasCanto() {
                       borderRadius: "50%",
                       transform: "translateX(-50%)",
                       boxShadow: `0 0 12px ${centsColor(pitch.cents)}`,
-                      transition: "left 0.1s",
+                      transition: "left 0.15s ease-out, background 0.15s",
                     }} />
                   </div>
                 </div>
