@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useRef, useEffect } from "react";
 
-const SECTIONS = ["Aulas", "Exercícios", "Afinador", "IA Professora"];
+const SECTIONS = ["Aulas", "Exercícios", "Afinador", "IA Professora", "Sobre Mim"];
 
 const AULAS = [
   {
@@ -623,6 +623,85 @@ export default function AulasCanto() {
                 flexShrink: 0,
                 opacity: loading || !input.trim() ? 0.5 : 1,
               }}>➤</button>
+            </div>
+          </div>
+        )}
+
+        {/* ===== SOBRE MIM ===== */}
+        {section === "Sobre Mim" && (
+          <div>
+            <div style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(180,120,255,0.15)",
+              borderRadius: 24,
+              padding: 28,
+              textAlign: "center",
+              marginBottom: 20,
+            }}>
+              <div style={{
+                width: 112, height: 112, borderRadius: "50%", margin: "0 auto 16px",
+                overflow: "hidden",
+                border: "3px solid rgba(180,120,255,0.4)",
+                boxShadow: "0 8px 30px rgba(168,85,247,0.4)",
+              }}>
+                <img src="/maria-diniz.jpg" alt="Maria Diniz" style={{
+                  width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%",
+                }} />
+              </div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>Maria Diniz</div>
+              <div style={{ color: "#a085cc", fontSize: 13, letterSpacing: 1 }}>CANTORA & PROFESSORA DE CANTO</div>
+            </div>
+
+            <div style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(180,120,255,0.15)",
+              borderRadius: 20,
+              padding: 24,
+              marginBottom: 16,
+            }}>
+              <div style={{ fontSize: 16, fontWeight: "bold", color: "#e0c8ff", marginBottom: 14 }}>Sobre mim</div>
+              <p style={{ color: "#c0b0d8", lineHeight: 1.8, fontSize: 15, marginBottom: 16 }}>
+                Sou cantora e professora de canto há mais de 20 anos. Já trabalhei com grandes artistas nacionais e internacionais.
+              </p>
+
+              <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
+                <div style={{ fontSize: 20, flexShrink: 0 }}>📺</div>
+                <div style={{ color: "#c0b0d8", lineHeight: 1.7, fontSize: 15 }}>
+                  Por 8 anos ensaiei os elencos das novelas infanto-juvenis do SBT: <strong style={{ color: "#e0c8ff" }}>Chiquititas, Carrossel, As Aventuras de Poliana</strong> e <strong style={{ color: "#e0c8ff" }}>Carinha de Anjo</strong>.
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ fontSize: 20, flexShrink: 0 }}>🌍</div>
+                <div style={{ color: "#c0b0d8", lineHeight: 1.7, fontSize: 15 }}>
+                  Dou aulas online e presenciais para alunos do Brasil e do exterior <span style={{ color: "#a085cc" }}>(Suíça, Miami, Texas, Canadá…)</span>.
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(168,85,247,0.15))",
+              border: "1px solid rgba(180,120,255,0.3)",
+              borderRadius: 20,
+              padding: 28,
+              textAlign: "center",
+            }}>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: "#e0c8ff", marginBottom: 16 }}>Quer ter aula comigo?</div>
+              <a href="https://instagram.com/mariadinizcantora" target="_blank" rel="noopener noreferrer" style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                color: "#fff",
+                borderRadius: 24,
+                padding: "12px 28px",
+                fontSize: 15,
+                fontWeight: "bold",
+                textDecoration: "none",
+                boxShadow: "0 8px 24px rgba(168,85,247,0.4)",
+              }}>
+                📷 @mariadinizcantora
+              </a>
             </div>
           </div>
         )}
