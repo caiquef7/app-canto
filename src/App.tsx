@@ -1,7 +1,77 @@
 // @ts-nocheck
 import { useState, useRef, useEffect } from "react";
 
-const SECTIONS = ["Aulas", "Exercícios", "Afinador", "IA Professora", "Sobre Mim"];
+const SECTIONS = ["Aulas", "Exercícios", "Afinador", "Rotina Vocal", "Consoantes", "IA Professora", "Sobre Mim"];
+
+const PILARES = [
+  { icon: "🌬️", titulo: "Respiração", texto: "O suporte respiratório adequado fornece estabilidade para a emissão vocal." },
+  { icon: "💧", titulo: "Hidratação", texto: "Uma musculatura vocal bem hidratada responde com mais eficiência e conforto." },
+  { icon: "🧘", titulo: "Relaxamento Corporal", texto: "Tensões no corpo podem limitar a liberdade vocal." },
+  { icon: "🎯", titulo: "Técnica", texto: "A técnica organiza e potencializa os recursos naturais da voz." },
+  { icon: "✨", titulo: "Expressão", texto: "A arte acontece quando a técnica encontra a emoção." },
+];
+
+const PERIODOS = [
+  {
+    nome: "Manhã",
+    emoji: "🌅",
+    subtitulo: "Despertando a Voz",
+    blocos: [
+      { titulo: "Silêncio Inicial", texto: "Ao acordar, procure permanecer em silêncio por aproximadamente 30 minutos. Assim como o corpo, a voz necessita de um período gradual de ativação." },
+      { titulo: "Preparação Corporal", texto: "Realize movimentos suaves para liberar tensões:", lista: ["Rotação dos ombros", "Alongamento da cervical", "Movimentos de \"sim\", \"não\" e inclinações laterais", "Alongamento geral do corpo"], obs: "Objetivo: promover mobilidade e preparar a musculatura para a emissão vocal." },
+      { titulo: "Respiração Consciente", texto: "Respire profundamente observando:", lista: ["Expansão abdominal", "Expansão das costelas inferiores", "Relaxamento dos ombros"], obs: "Evite elevar os ombros durante a inspiração." },
+      { titulo: "Exercícios Respiratórios", sons: ["S Sustentado — Sssssssssssss", "S/X Staccato — S! S! S! S! X! X! X! X!"], obs: "Objetivos: controle do fluxo de ar · fortalecimento do suporte · coordenação respiratória · agilidade muscular" },
+      { titulo: "Aquecimento Vocal — Ressonância Nasal", sons: ["Mmmmmmmmm", "Mmmmmmmmm (mastigado)"], obs: "Objetivos: ativação suave da voz · melhor percepção da ressonância" },
+      { titulo: "Exercícios de Vibração Sonora", sons: ["Vvvvvvvvvv", "Zzzzzzzzzz", "Jjjjjjjjjjj"], obs: "Explore gradualmente: graves · médios · agudos — sempre sem esforço." },
+      { titulo: "Exercício de Consciência Vocal", texto: "Escolha uma música simples e cante-a inteiramente utilizando apenas o som:", sons: ["Mmmmm"], obs: "Desenvolve: afinação · apoio respiratório · ressonância · uniformidade vocal" },
+    ],
+  },
+  {
+    nome: "Tarde",
+    emoji: "☀️",
+    subtitulo: "Coordenação e Flexibilidade",
+    blocos: [
+      { titulo: "Vibração de Língua / Vibração de Lábios", sons: ["Trrrrrrrrrrrr (língua)", "Brrrrrrrrrrrr (lábios)"] },
+      { titulo: "Sequências Vocálicas", sons: ["Trrrrrá · Trrrrré · Trrrrrê · Trrrrrí · Trrrrró · Trrrrrô · Trrrrrú", "Brrrrrá · Brrrrré · Brrrrrê · Brrrrrí · Brrrrró · Brrrrrô · Brrrrrú"], obs: "Coordenação vocal · Equilíbrio respiratório · Flexibilidade muscular · Redução de tensões" },
+    ],
+  },
+  {
+    nome: "Noite",
+    emoji: "🌙",
+    subtitulo: "Relaxamento Vocal",
+    blocos: [
+      { titulo: "Bocejos Sonorizados Descendentes", texto: "Ao final do dia, permita que a musculatura vocal retorne ao estado de repouso.", sons: ["Ahhhh · Éhhhh · Êhhhh · Ihhhh · Óhhhh · Ôhhhh · Úhhhh"], obs: "Execute sem esforço, associando os sons a movimentos de espreguiçamento. Relaxamento laríngeo · Redução de tensões · Recuperação vocal" },
+    ],
+  },
+];
+
+const CUIDADOS = [
+  { icon: "😴", titulo: "Sono", texto: "O descanso adequado favorece a recuperação física e vocal." },
+  { icon: "💧", titulo: "Hidratação", texto: "Mantenha água por perto durante todo o dia. Pequenas quantidades consumidas regularmente são mais eficazes do que grandes volumes de uma só vez." },
+  { icon: "🔇", titulo: "Ambientes Barulhentos", texto: "Evite competir com ruídos intensos. Quando necessário, aproxime-se da pessoa com quem está conversando." },
+  { icon: "👔", titulo: "Vestuário", texto: "Evite roupas que comprimam excessivamente o pescoço, o tórax ou o abdômen." },
+  { icon: "📅", titulo: "Prática Diária", texto: "O desenvolvimento vocal é resultado da repetição consciente. Poucos minutos diários produzem resultados mais consistentes do que longos períodos esporádicos de estudo." },
+  { icon: "🍽️", titulo: "Alimentação (antes de cantar)", texto: "Prefira refeições leves. Observe alimentos que provocam refluxo ou desconforto. Conheça as respostas do seu próprio organismo." },
+];
+
+const ALERTAS = [
+  "Rouquidão persistente",
+  "Dor ao falar ou cantar",
+  "Quebras frequentes da voz",
+  "Sensação constante de esforço vocal",
+  "Perda de extensão vocal",
+];
+
+const CONSOANTES_TABELA = {
+  colunas: ["FRICATIVAS", "MODERADAS", "DURAS/PLOSIVAS"],
+  linhas: [
+    ["f, s, x, j, z, v", "m, n, nh, lh", "g, k, c, p, b, t, d"],
+    ["Aumento do fluxo aéreo", "Regula fluxo aéreo", "Diminui fluxo aéreo"],
+    ["Reduzem adução", "Equilibra adução", "Aumenta adução"],
+    ["Alivia resistência PV", "Melhora resistência PV", "Estimula resistência PV"],
+    ["Facilita alongamento PV", "Regula contração e alonga PV", "Facilita o encurtamento e contração PV"],
+  ],
+};
 
 const AULAS = [
   {
@@ -113,6 +183,7 @@ export default function AulasCanto() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [pitch, setPitch] = useState(null);
   const [afinando, setAfinando] = useState(false);
+  const [periodoAtivo, setPeriodoAtivo] = useState("Manhã");
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }
   ]);
@@ -373,7 +444,15 @@ export default function AulasCanto() {
       </div>
 
       {/* Nav */}
-      <div style={{ display: "flex", gap: 8, padding: "16px 24px", overflowX: "auto" }}>
+      <style>{`.vox-nav-scroll::-webkit-scrollbar { display: none; }`}</style>
+      <div className="vox-nav-scroll" style={{
+        display: "flex",
+        gap: 8,
+        padding: "16px 24px",
+        overflowX: "auto",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}>
         {SECTIONS.map(s => (
           <button key={s} onClick={() => setSection(s)} style={{
             background: section === s ? "linear-gradient(135deg, #7c3aed, #a855f7)" : "rgba(255,255,255,0.06)",
@@ -599,6 +678,156 @@ export default function AulasCanto() {
             </button>
             <div style={{ color: "#6b5080", fontSize: 12, marginTop: 12 }}>
               Requer permissão de microfone
+            </div>
+          </div>
+        )}
+
+        {/* ===== ROTINA VOCAL ===== */}
+        {section === "Rotina Vocal" && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>Rotina Vocal Diária</div>
+              <div style={{ color: "#a085cc", fontSize: 14, lineHeight: 1.6 }}>
+                Mais importante do que a intensidade dos exercícios é a constância da prática. Dedique alguns minutos diariamente ao cuidado da sua voz.
+              </div>
+            </div>
+
+            {/* Pilares */}
+            <div style={{ fontSize: 15, fontWeight: "bold", color: "#e0c8ff", marginBottom: 10 }}>Pilares de uma Voz Saudável</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+              {PILARES.map((p, i) => (
+                <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 14, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 22 }}>{p.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: "bold", color: "#e0c8ff", fontSize: 14, marginBottom: 2 }}>{p.titulo}</div>
+                    <div style={{ color: "#a085cc", fontSize: 13, lineHeight: 1.5 }}>{p.texto}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tabs de período */}
+            <div style={{ fontSize: 15, fontWeight: "bold", color: "#e0c8ff", marginBottom: 10 }}>Rotina por Período</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {PERIODOS.map(p => (
+                <button key={p.nome} onClick={() => setPeriodoAtivo(p.nome)} style={{
+                  flex: 1,
+                  background: periodoAtivo === p.nome ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "rgba(255,255,255,0.06)",
+                  color: periodoAtivo === p.nome ? "#fff" : "#c0a0e0",
+                  border: periodoAtivo === p.nome ? "none" : "1px solid rgba(180,120,255,0.2)",
+                  borderRadius: 16,
+                  padding: "10px 8px",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 13,
+                  fontWeight: "bold",
+                }}>{p.emoji} {p.nome}</button>
+              ))}
+            </div>
+
+            {PERIODOS.filter(p => p.nome === periodoAtivo).map(p => (
+              <div key={p.nome} style={{ marginBottom: 24 }}>
+                <div style={{ color: "#a085cc", fontSize: 13, marginBottom: 12, fontStyle: "italic" }}>{p.subtitulo}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {p.blocos.map((b, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 16, padding: 18 }}>
+                      <div style={{ fontWeight: "bold", color: "#e0c8ff", fontSize: 14, marginBottom: 8 }}>{b.titulo}</div>
+                      {b.texto && <div style={{ color: "#c0b0d8", fontSize: 13, lineHeight: 1.6, marginBottom: b.lista || b.sons ? 10 : 0 }}>{b.texto}</div>}
+                      {b.lista && (
+                        <div style={{ marginBottom: 10 }}>
+                          {b.lista.map((l, j) => (
+                            <div key={j} style={{ display: "flex", gap: 8, color: "#c0b0d8", fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}>
+                              <span style={{ color: "#a855f7" }}>•</span><span>{l}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {b.sons && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                          {b.sons.map((s, j) => (
+                            <div key={j} style={{ background: "rgba(124,58,237,0.2)", color: "#e0c8ff", borderRadius: 10, padding: "8px 12px", fontSize: 13, fontFamily: "monospace" }}>{s}</div>
+                          ))}
+                        </div>
+                      )}
+                      {b.obs && <div style={{ color: "#7c6a94", fontSize: 12, lineHeight: 1.5 }}>{b.obs}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Cuidados diários */}
+            <div style={{ fontSize: 15, fontWeight: "bold", color: "#e0c8ff", marginBottom: 10 }}>Hábitos que Fortalecem sua Voz</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+              {CUIDADOS.map((c, i) => (
+                <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 14, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 20 }}>{c.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: "bold", color: "#e0c8ff", fontSize: 14, marginBottom: 2 }}>{c.titulo}</div>
+                    <div style={{ color: "#a085cc", fontSize: 13, lineHeight: 1.5 }}>{c.texto}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Atenção */}
+            <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 16, padding: 18, marginBottom: 24 }}>
+              <div style={{ fontWeight: "bold", color: "#f87171", fontSize: 14, marginBottom: 10 }}>⚠️ Quando Procurar Ajuda Profissional</div>
+              {ALERTAS.map((a, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, color: "#e8b8b8", fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}>
+                  <span>•</span><span>{a}</span>
+                </div>
+              ))}
+              <div style={{ color: "#e8b8b8", fontSize: 12, marginTop: 10 }}>Profissionais indicados: Otorrinolaringologista · Fonoaudiólogo especializado em voz</div>
+            </div>
+
+            {/* Mensagem final */}
+            <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(168,85,247,0.15))", border: "1px solid rgba(180,120,255,0.3)", borderRadius: 20, padding: 24, textAlign: "center" }}>
+              <div style={{ fontSize: 24, marginBottom: 8 }}>♥</div>
+              <div style={{ color: "#e0c8ff", fontSize: 14, lineHeight: 1.8 }}>
+                A voz é a expressão sonora da sua identidade. Cultive hábitos saudáveis, pratique com regularidade e desenvolva sua técnica com paciência.
+                <br /><br />
+                <strong>Cuide da sua voz. Ela é única.</strong>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== CONSOANTES ===== */}
+        {section === "Consoantes" && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>Tabela de Consoantes</div>
+              <div style={{ color: "#a085cc", fontSize: 14 }}>Funcionalidade das consoantes no fluxo vocal</div>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 16, overflow: "hidden", overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+                <thead>
+                  <tr>
+                    {CONSOANTES_TABELA.colunas.map((c, i) => (
+                      <th key={i} style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)", color: "#fff", textAlign: "left", padding: "14px 16px", fontSize: 13, letterSpacing: 0.5 }}>{c}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CONSOANTES_TABELA.linhas.map((linha, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? "rgba(124,58,237,0.08)" : "transparent" }}>
+                      {linha.map((valor, j) => (
+                        <td key={j} style={{
+                          padding: "14px 16px",
+                          fontSize: 13,
+                          color: j === 0 ? "#e0c8ff" : "#c0b0d8",
+                          fontWeight: j === 0 ? "bold" : "normal",
+                          borderTop: "1px solid rgba(180,120,255,0.1)",
+                        }}>{valor}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ color: "#7c6a94", fontSize: 12, marginTop: 12, lineHeight: 1.6 }}>
+              PV = pregas vocais. Fricativas facilitam o fluxo aéreo e relaxam a musculatura; consoantes duras/plosivas exigem mais fechamento glótico.
             </div>
           </div>
         )}
