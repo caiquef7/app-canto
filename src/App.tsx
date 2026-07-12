@@ -1,77 +1,7 @@
 // @ts-nocheck
 import { useState, useRef, useEffect } from "react";
 
-const SECTIONS = ["Aulas", "Exercícios", "Afinador", "Rotina Vocal", "Consoantes", "IA Professora", "Sobre Mim"];
-
-const PILARES = [
-  { icon: "🌬️", titulo: "Respiração", texto: "O suporte respiratório adequado fornece estabilidade para a emissão vocal." },
-  { icon: "💧", titulo: "Hidratação", texto: "Uma musculatura vocal bem hidratada responde com mais eficiência e conforto." },
-  { icon: "🧘", titulo: "Relaxamento Corporal", texto: "Tensões no corpo podem limitar a liberdade vocal." },
-  { icon: "🎯", titulo: "Técnica", texto: "A técnica organiza e potencializa os recursos naturais da voz." },
-  { icon: "✨", titulo: "Expressão", texto: "A arte acontece quando a técnica encontra a emoção." },
-];
-
-const PERIODOS = [
-  {
-    nome: "Manhã",
-    emoji: "🌅",
-    subtitulo: "Despertando a Voz",
-    blocos: [
-      { titulo: "Silêncio Inicial", texto: "Ao acordar, procure permanecer em silêncio por aproximadamente 30 minutos. Assim como o corpo, a voz necessita de um período gradual de ativação." },
-      { titulo: "Preparação Corporal", texto: "Realize movimentos suaves para liberar tensões:", lista: ["Rotação dos ombros", "Alongamento da cervical", "Movimentos de \"sim\", \"não\" e inclinações laterais", "Alongamento geral do corpo"], obs: "Objetivo: promover mobilidade e preparar a musculatura para a emissão vocal." },
-      { titulo: "Respiração Consciente", texto: "Respire profundamente observando:", lista: ["Expansão abdominal", "Expansão das costelas inferiores", "Relaxamento dos ombros"], obs: "Evite elevar os ombros durante a inspiração." },
-      { titulo: "Exercícios Respiratórios", sons: ["S Sustentado — Sssssssssssss", "S/X Staccato — S! S! S! S! X! X! X! X!"], obs: "Objetivos: controle do fluxo de ar · fortalecimento do suporte · coordenação respiratória · agilidade muscular" },
-      { titulo: "Aquecimento Vocal — Ressonância Nasal", sons: ["Mmmmmmmmm", "Mmmmmmmmm (mastigado)"], obs: "Objetivos: ativação suave da voz · melhor percepção da ressonância" },
-      { titulo: "Exercícios de Vibração Sonora", sons: ["Vvvvvvvvvv", "Zzzzzzzzzz", "Jjjjjjjjjjj"], obs: "Explore gradualmente: graves · médios · agudos — sempre sem esforço." },
-      { titulo: "Exercício de Consciência Vocal", texto: "Escolha uma música simples e cante-a inteiramente utilizando apenas o som:", sons: ["Mmmmm"], obs: "Desenvolve: afinação · apoio respiratório · ressonância · uniformidade vocal" },
-    ],
-  },
-  {
-    nome: "Tarde",
-    emoji: "☀️",
-    subtitulo: "Coordenação e Flexibilidade",
-    blocos: [
-      { titulo: "Vibração de Língua / Vibração de Lábios", sons: ["Trrrrrrrrrrrr (língua)", "Brrrrrrrrrrrr (lábios)"] },
-      { titulo: "Sequências Vocálicas", sons: ["Trrrrrá · Trrrrré · Trrrrrê · Trrrrrí · Trrrrró · Trrrrrô · Trrrrrú", "Brrrrrá · Brrrrré · Brrrrrê · Brrrrrí · Brrrrró · Brrrrrô · Brrrrrú"], obs: "Coordenação vocal · Equilíbrio respiratório · Flexibilidade muscular · Redução de tensões" },
-    ],
-  },
-  {
-    nome: "Noite",
-    emoji: "🌙",
-    subtitulo: "Relaxamento Vocal",
-    blocos: [
-      { titulo: "Bocejos Sonorizados Descendentes", texto: "Ao final do dia, permita que a musculatura vocal retorne ao estado de repouso.", sons: ["Ahhhh · Éhhhh · Êhhhh · Ihhhh · Óhhhh · Ôhhhh · Úhhhh"], obs: "Execute sem esforço, associando os sons a movimentos de espreguiçamento. Relaxamento laríngeo · Redução de tensões · Recuperação vocal" },
-    ],
-  },
-];
-
-const CUIDADOS = [
-  { icon: "😴", titulo: "Sono", texto: "O descanso adequado favorece a recuperação física e vocal." },
-  { icon: "💧", titulo: "Hidratação", texto: "Mantenha água por perto durante todo o dia. Pequenas quantidades consumidas regularmente são mais eficazes do que grandes volumes de uma só vez." },
-  { icon: "🔇", titulo: "Ambientes Barulhentos", texto: "Evite competir com ruídos intensos. Quando necessário, aproxime-se da pessoa com quem está conversando." },
-  { icon: "👔", titulo: "Vestuário", texto: "Evite roupas que comprimam excessivamente o pescoço, o tórax ou o abdômen." },
-  { icon: "📅", titulo: "Prática Diária", texto: "O desenvolvimento vocal é resultado da repetição consciente. Poucos minutos diários produzem resultados mais consistentes do que longos períodos esporádicos de estudo." },
-  { icon: "🍽️", titulo: "Alimentação (antes de cantar)", texto: "Prefira refeições leves. Observe alimentos que provocam refluxo ou desconforto. Conheça as respostas do seu próprio organismo." },
-];
-
-const ALERTAS = [
-  "Rouquidão persistente",
-  "Dor ao falar ou cantar",
-  "Quebras frequentes da voz",
-  "Sensação constante de esforço vocal",
-  "Perda de extensão vocal",
-];
-
-const CONSOANTES_TABELA = {
-  colunas: ["FRICATIVAS", "MODERADAS", "DURAS/PLOSIVAS"],
-  linhas: [
-    ["f, s, x, j, z, v", "m, n, nh, lh", "g, k, c, p, b, t, d"],
-    ["Aumento do fluxo aéreo", "Regula fluxo aéreo", "Diminui fluxo aéreo"],
-    ["Reduzem adução", "Equilibra adução", "Aumenta adução"],
-    ["Alivia resistência PV", "Melhora resistência PV", "Estimula resistência PV"],
-    ["Facilita alongamento PV", "Regula contração e alonga PV", "Facilita o encurtamento e contração PV"],
-  ],
-};
+const SECTIONS = ["Aulas", "Exercícios", "Afinador", "Rotina Vocal", "Consoantes", "Área do Aluno", "IA Professora", "Sobre Mim"];
 
 const AULAS = [
   {
@@ -147,10 +77,166 @@ const EXERCICIOS = [
 
 const NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+const PILARES = [
+  { icon: "🌬️", titulo: "Respiração", texto: "O suporte respiratório adequado fornece estabilidade para a emissão vocal." },
+  { icon: "💧", titulo: "Hidratação", texto: "Uma musculatura vocal bem hidratada responde com mais eficiência e conforto." },
+  { icon: "🧘", titulo: "Relaxamento Corporal", texto: "Tensões no corpo podem limitar a liberdade vocal." },
+  { icon: "🎯", titulo: "Técnica", texto: "A técnica organiza e potencializa os recursos naturais da voz." },
+  { icon: "✨", titulo: "Expressão", texto: "A arte acontece quando a técnica encontra a emoção." },
+];
+
+const PERIODOS = [
+  {
+    nome: "Manhã",
+    emoji: "🌅",
+    subtitulo: "Despertando a Voz",
+    blocos: [
+      { titulo: "Silêncio Inicial", texto: "Ao acordar, procure permanecer em silêncio por aproximadamente 30 minutos. Assim como o corpo, a voz necessita de um período gradual de ativação." },
+      { titulo: "Preparação Corporal", texto: "Realize movimentos suaves para liberar tensões:", lista: ["Rotação dos ombros", "Alongamento da cervical", "Movimentos de \"sim\", \"não\" e inclinações laterais", "Alongamento geral do corpo"], obs: "Objetivo: promover mobilidade e preparar a musculatura para a emissão vocal." },
+      { titulo: "Respiração Consciente", texto: "Respire profundamente observando:", lista: ["Expansão abdominal", "Expansão das costelas inferiores", "Relaxamento dos ombros"], obs: "Evite elevar os ombros durante a inspiração." },
+      { titulo: "Exercícios Respiratórios", sons: ["S Sustentado — Sssssssssssss", "S/X Staccato — S! S! S! S! X! X! X! X!"], obs: "Objetivos: controle do fluxo de ar · fortalecimento do suporte · coordenação respiratória · agilidade muscular" },
+      { titulo: "Aquecimento Vocal — Ressonância Nasal", sons: ["Mmmmmmmmm", "Mmmmmmmmm (mastigado)"], obs: "Objetivos: ativação suave da voz · melhor percepção da ressonância" },
+      { titulo: "Exercícios de Vibração Sonora", sons: ["Vvvvvvvvvv", "Zzzzzzzzzz", "Jjjjjjjjjjj"], obs: "Explore gradualmente: graves · médios · agudos — sempre sem esforço." },
+      { titulo: "Exercício de Consciência Vocal", texto: "Escolha uma música simples e cante-a inteiramente utilizando apenas o som:", sons: ["Mmmmm"], obs: "Desenvolve: afinação · apoio respiratório · ressonância · uniformidade vocal" },
+    ],
+  },
+  {
+    nome: "Tarde",
+    emoji: "☀️",
+    subtitulo: "Coordenação e Flexibilidade",
+    blocos: [
+      { titulo: "Vibração de Língua / Vibração de Lábios", sons: ["Trrrrrrrrrrrr (língua)", "Brrrrrrrrrrrr (lábios)"] },
+      { titulo: "Sequências Vocálicas", sons: ["Trrrrrá · Trrrrré · Trrrrrê · Trrrrrí · Trrrrró · Trrrrrô · Trrrrrú", "Brrrrrá · Brrrrré · Brrrrrê · Brrrrrí · Brrrrró · Brrrrrô · Brrrrrú"], obs: "Coordenação vocal · Equilíbrio respiratório · Flexibilidade muscular · Redução de tensões" },
+    ],
+  },
+  {
+    nome: "Noite",
+    emoji: "🌙",
+    subtitulo: "Relaxamento Vocal",
+    blocos: [
+      { titulo: "Bocejos Sonorizados Descendentes", texto: "Ao final do dia, permita que a musculatura vocal retorne ao estado de repouso.", sons: ["Ahhhh · Éhhhh · Êhhhh · Ihhhh · Óhhhh · Ôhhhh · Úhhhh"], obs: "Execute sem esforço, associando os sons a movimentos de espreguiçamento. Relaxamento laríngeo · Redução de tensões · Recuperação vocal" },
+    ],
+  },
+];
+
+const CUIDADOS = [
+  { icon: "😴", titulo: "Sono", texto: "O descanso adequado favorece a recuperação física e vocal." },
+  { icon: "💧", titulo: "Hidratação", texto: "Mantenha água por perto durante todo o dia. Pequenas quantidades consumidas regularmente são mais eficazes do que grandes volumes de uma só vez." },
+  { icon: "🔇", titulo: "Ambientes Barulhentos", texto: "Evite competir com ruídos intensos. Quando necessário, aproxime-se da pessoa com quem está conversando." },
+  { icon: "👔", titulo: "Vestuário", texto: "Evite roupas que comprimam excessivamente o pescoço, o tórax ou o abdômen." },
+  { icon: "📅", titulo: "Prática Diária", texto: "O desenvolvimento vocal é resultado da repetição consciente. Poucos minutos diários produzem resultados mais consistentes do que longos períodos esporádicos de estudo." },
+  { icon: "🍽️", titulo: "Alimentação (antes de cantar)", texto: "Prefira refeições leves. Observe alimentos que provocam refluxo ou desconforto. Conheça as respostas do seu próprio organismo." },
+];
+
+const ALERTAS = [
+  "Rouquidão persistente",
+  "Dor ao falar ou cantar",
+  "Quebras frequentes da voz",
+  "Sensação constante de esforço vocal",
+  "Perda de extensão vocal",
+];
+
+const CONSOANTES_TABELA = {
+  colunas: ["FRICATIVAS", "MODERADAS", "DURAS/PLOSIVAS"],
+  linhas: [
+    ["f, s, x, j, z, v", "m, n, nh, lh", "g, k, c, p, b, t, d"],
+    ["Aumento do fluxo aéreo", "Regula fluxo aéreo", "Diminui fluxo aéreo"],
+    ["Reduzem adução", "Equilibra adução", "Aumenta adução"],
+    ["Alivia resistência PV", "Melhora resistência PV", "Estimula resistência PV"],
+    ["Facilita alongamento PV", "Regula contração e alonga PV", "Facilita o encurtamento e contração PV"],
+  ],
+};
+
+const NIVEL_OPTIONS = ["Iniciante", "Intermediário", "Avançado"];
+const FREQ_OPTIONS = ["Raramente", "Às vezes", "Com frequência", "Sempre"];
+const STATUS_OPTIONS = ["Em andamento", "Dominada", "Revisitar"];
+const EVOLUCAO_OPTIONS = [
+  { v: 1, label: "Ainda não senti" },
+  { v: 2, label: "Um pouco" },
+  { v: 3, label: "Sinto evolução" },
+  { v: 4, label: "Muita evolução" },
+];
+
+const voxInputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  background: "rgba(255,255,255,0.07)",
+  border: "1px solid rgba(180,120,255,0.2)",
+  borderRadius: 12,
+  padding: "12px 16px",
+  color: "#f0e6ff",
+  fontFamily: "inherit",
+  fontSize: 14,
+  outline: "none",
+};
+
+const voxFieldLabelStyle = { color: "#a085cc", fontSize: 13, marginBottom: 6, display: "block" };
+const voxCardStyle = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(180,120,255,0.15)", borderRadius: 20, padding: 24, marginBottom: 16 };
+const voxEyebrowStyle = { fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "#a855f7", fontWeight: "bold", marginBottom: 4 };
+const voxCardTitleStyle = { fontSize: 18, fontWeight: "bold", color: "#e0c8ff", marginBottom: 18 };
+
+function CustomSelectVox({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{ ...voxInputStyle, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+      >
+        <span>{value}</span>
+        <span style={{ color: "#a085cc", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: 12 }}>▾</span>
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", left: 0, right: 0, marginTop: 6, zIndex: 30,
+          background: "#1a0f2e", border: "1px solid rgba(180,120,255,0.25)", borderRadius: 12, overflow: "hidden",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+        }}>
+          {options.map(opt => (
+            <div
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              style={{
+                padding: "10px 16px",
+                fontSize: 13,
+                cursor: "pointer",
+                background: opt === value ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "transparent",
+                color: opt === value ? "#fff" : "#c0b0d8",
+                fontWeight: opt === value ? "bold" : "normal",
+              }}
+            >{opt}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatTime(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function formatDataRegistro(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+      " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    return "";
+  }
 }
 
 function getFrequency(note, octave) {
@@ -184,6 +270,23 @@ export default function AulasCanto() {
   const [pitch, setPitch] = useState(null);
   const [afinando, setAfinando] = useState(false);
   const [periodoAtivo, setPeriodoAtivo] = useState("Manhã");
+
+  // Área do Aluno
+  const [alunoProfile, setAlunoProfile] = useState({ nome: "", inicio: "", objetivo: "", nivel: "Iniciante", estilos: "" });
+  const [alunoSaude, setAlunoSaude] = useState({ queixas: "", frequencia: "Às vezes", observacoes: "" });
+  const [alunoEvolucao, setAlunoEvolucao] = useState(3);
+  const [alunoRelato, setAlunoRelato] = useState("");
+  const [repertorio, setRepertorio] = useState([{ id: 1, musica: "", status: "Em andamento" }]);
+  const [alunoSalvo, setAlunoSalvo] = useState(false);
+  const [historico, setHistorico] = useState(() => {
+    try {
+      const saved = localStorage.getItem("vox_aluno_historico");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Olá! Sou a professora Maria Diniz 🎤 Como posso te ajudar hoje? Pode me perguntar sobre técnica vocal, respiração, como melhorar seu agudo, ou qualquer dúvida sobre canto!" }
   ]);
@@ -220,6 +323,46 @@ export default function AulasCanto() {
     setTimerRunning(false);
     setExAtivo(null);
     setTimer(0);
+  };
+
+  // Área do Aluno - handlers
+  const addMusica = () => {
+    setRepertorio(r => [...r, { id: Date.now(), musica: "", status: "Em andamento" }]);
+  };
+  const updateMusica = (id, field, value) => {
+    setRepertorio(r => r.map(m => (m.id === id ? { ...m, [field]: value } : m)));
+  };
+  const removeMusica = (id) => {
+    setRepertorio(r => r.filter(m => m.id !== id));
+  };
+  const handleSalvarAluno = () => {
+    const novoRegistro = {
+      id: Date.now(),
+      data: new Date().toISOString(),
+      nome: alunoProfile.nome,
+      nivel: alunoProfile.nivel,
+      objetivo: alunoProfile.objetivo,
+      queixas: alunoSaude.queixas,
+      frequenciaQueixas: alunoSaude.frequencia,
+      evolucao: alunoEvolucao,
+      relato: alunoRelato,
+      repertorio: repertorio.filter(m => m.musica.trim()),
+    };
+    setHistorico(h => {
+      const novo = [novoRegistro, ...h];
+      try { localStorage.setItem("vox_aluno_historico", JSON.stringify(novo)); } catch (e) {}
+      return novo;
+    });
+    setAlunoSalvo(true);
+    setTimeout(() => setAlunoSalvo(false), 2500);
+  };
+
+  const removeRegistro = (id) => {
+    setHistorico(h => {
+      const novo = h.filter(r => r.id !== id);
+      try { localStorage.setItem("vox_aluno_historico", JSON.stringify(novo)); } catch (e) {}
+      return novo;
+    });
   };
 
   // Afinador
@@ -262,11 +405,9 @@ export default function AulasCanto() {
         hist.push(freq);
         if (hist.length > 8) hist.shift();
 
-        // usa a mediana das últimas leituras pra evitar tremedeira/saltos de oitava
         const sorted = [...hist].sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)];
 
-        // só aceita a leitura se ela não for um salto absurdo comparado à mediana recente
         if (hist.length < 3 || Math.abs(1200 * Math.log2(freq / median)) < 150) {
           setPitch(detectNote(median));
         }
@@ -325,7 +466,6 @@ export default function AulasCanto() {
 
     const freqOut = sampleRate / T0;
 
-    // faixa vocal humana plausível — descarta oitavas erradas / ruído
     if (freqOut < 70 || freqOut > 1100) return -1;
 
     return freqOut;
@@ -610,7 +750,6 @@ export default function AulasCanto() {
               <div style={{ color: "#a085cc", fontSize: 14 }}>Cante uma nota e veja se está afinado</div>
             </div>
 
-            {/* Display principal */}
             <div style={{
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(180,120,255,0.2)",
@@ -630,7 +769,6 @@ export default function AulasCanto() {
                 {pitch ? centsLabel(pitch.cents) : (afinando ? "Aguardando nota..." : "Inicie o afinador")}
               </div>
 
-              {/* Barra de cents */}
               {pitch && (
                 <div style={{ marginTop: 24 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#6b5080", fontSize: 11, marginBottom: 8 }}>
@@ -692,7 +830,6 @@ export default function AulasCanto() {
               </div>
             </div>
 
-            {/* Pilares */}
             <div style={{ fontSize: 15, fontWeight: "bold", color: "#e0c8ff", marginBottom: 10 }}>Pilares de uma Voz Saudável</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
               {PILARES.map((p, i) => (
@@ -706,7 +843,6 @@ export default function AulasCanto() {
               ))}
             </div>
 
-            {/* Tabs de período */}
             <div style={{ fontSize: 15, fontWeight: "bold", color: "#e0c8ff", marginBottom: 10 }}>Rotina por Período</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               {PERIODOS.map(p => (
@@ -756,7 +892,6 @@ export default function AulasCanto() {
               </div>
             ))}
 
-            {/* Cuidados diários */}
             <div style={{ fontSize: 15, fontWeight: "bold", color: "#e0c8ff", marginBottom: 10 }}>Hábitos que Fortalecem sua Voz</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
               {CUIDADOS.map((c, i) => (
@@ -770,7 +905,6 @@ export default function AulasCanto() {
               ))}
             </div>
 
-            {/* Atenção */}
             <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 16, padding: 18, marginBottom: 24 }}>
               <div style={{ fontWeight: "bold", color: "#f87171", fontSize: 14, marginBottom: 10 }}>⚠️ Quando Procurar Ajuda Profissional</div>
               {ALERTAS.map((a, i) => (
@@ -781,7 +915,6 @@ export default function AulasCanto() {
               <div style={{ color: "#e8b8b8", fontSize: 12, marginTop: 10 }}>Profissionais indicados: Otorrinolaringologista · Fonoaudiólogo especializado em voz</div>
             </div>
 
-            {/* Mensagem final */}
             <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(168,85,247,0.15))", border: "1px solid rgba(180,120,255,0.3)", borderRadius: 20, padding: 24, textAlign: "center" }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>♥</div>
               <div style={{ color: "#e0c8ff", fontSize: 14, lineHeight: 1.8 }}>
@@ -832,6 +965,171 @@ export default function AulasCanto() {
           </div>
         )}
 
+        {/* ===== ÁREA DO ALUNO ===== */}
+        {section === "Área do Aluno" && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: "#e0c8ff", marginBottom: 4 }}>Área do Aluno</div>
+              <div style={{ color: "#a085cc", fontSize: 14 }}>Acompanhe sua jornada vocal — do primeiro aquecimento à voz que você quer ter.</div>
+            </div>
+
+            {/* Perfil */}
+            <div style={voxCardStyle}>
+              <div style={voxEyebrowStyle}>PERFIL</div>
+              <div style={voxCardTitleStyle}>Sobre você e seus objetivos</div>
+
+              <div style={{ marginBottom: 16 }}>
+                <span style={voxFieldLabelStyle}>Nome</span>
+                <input style={voxInputStyle} placeholder="Seu nome" value={alunoProfile.nome} onChange={e => setAlunoProfile({ ...alunoProfile, nome: e.target.value })} />
+              </div>
+
+              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <span style={voxFieldLabelStyle}>Início dos estudos</span>
+                  <input type="date" style={{ ...voxInputStyle, colorScheme: "dark" }} value={alunoProfile.inicio} onChange={e => setAlunoProfile({ ...alunoProfile, inicio: e.target.value })} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={voxFieldLabelStyle}>Nível</span>
+                  <CustomSelectVox value={alunoProfile.nivel} onChange={v => setAlunoProfile({ ...alunoProfile, nivel: v })} options={NIVEL_OPTIONS} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <span style={voxFieldLabelStyle}>O que você quer melhorar na voz?</span>
+                <textarea style={{ ...voxInputStyle, minHeight: 80, resize: "none" }} placeholder="Ex: projeção, afinação, alcance de notas agudas..." value={alunoProfile.objetivo} onChange={e => setAlunoProfile({ ...alunoProfile, objetivo: e.target.value })} />
+              </div>
+
+              <div>
+                <span style={voxFieldLabelStyle}>Estilos que mais gosta de cantar</span>
+                <input style={voxInputStyle} placeholder="Ex: pop, MPB, gospel..." value={alunoProfile.estilos} onChange={e => setAlunoProfile({ ...alunoProfile, estilos: e.target.value })} />
+              </div>
+            </div>
+
+            {/* Saúde vocal */}
+            <div style={voxCardStyle}>
+              <div style={voxEyebrowStyle}>SAÚDE VOCAL</div>
+              <div style={voxCardTitleStyle}>Dores e queixas</div>
+
+              <div style={{ marginBottom: 16 }}>
+                <span style={voxFieldLabelStyle}>Descreva o que está sentindo</span>
+                <textarea style={{ ...voxInputStyle, minHeight: 80, resize: "none" }} placeholder="Ex: rouquidão, cansaço ao cantar, falta de ar..." value={alunoSaude.queixas} onChange={e => setAlunoSaude({ ...alunoSaude, queixas: e.target.value })} />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <span style={voxFieldLabelStyle}>Com que frequência isso acontece?</span>
+                <CustomSelectVox value={alunoSaude.frequencia} onChange={v => setAlunoSaude({ ...alunoSaude, frequencia: v })} options={FREQ_OPTIONS} />
+              </div>
+
+              <div>
+                <span style={voxFieldLabelStyle}>Observações (opcional)</span>
+                <textarea style={{ ...voxInputStyle, minHeight: 60, resize: "none" }} placeholder="Algo mais que queira contar sobre sua voz?" value={alunoSaude.observacoes} onChange={e => setAlunoSaude({ ...alunoSaude, observacoes: e.target.value })} />
+              </div>
+            </div>
+
+            {/* Evolução */}
+            <div style={voxCardStyle}>
+              <div style={voxEyebrowStyle}>EVOLUÇÃO</div>
+              <div style={voxCardTitleStyle}>Como você sente sua voz agora?</div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                {EVOLUCAO_OPTIONS.map(opt => (
+                  <button key={opt.v} onClick={() => setAlunoEvolucao(opt.v)} style={{
+                    background: alunoEvolucao === opt.v ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "rgba(255,255,255,0.06)",
+                    color: alunoEvolucao === opt.v ? "#fff" : "#a085cc",
+                    border: alunoEvolucao === opt.v ? "none" : "1px solid rgba(180,120,255,0.2)",
+                    borderRadius: 12,
+                    padding: "10px 12px",
+                    fontSize: 13,
+                    fontWeight: alunoEvolucao === opt.v ? "bold" : "normal",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    textAlign: "left",
+                  }}>{opt.label}</button>
+                ))}
+              </div>
+
+              <div>
+                <span style={voxFieldLabelStyle}>Conte um pouco mais: o que tem cantado, como foi a semana</span>
+                <textarea style={{ ...voxInputStyle, minHeight: 90, resize: "none" }} placeholder="Relate livremente seu progresso, dificuldades ou conquistas..." value={alunoRelato} onChange={e => setAlunoRelato(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Repertório */}
+            <div style={voxCardStyle}>
+              <div style={voxEyebrowStyle}>REPERTÓRIO</div>
+              <div style={voxCardTitleStyle}>Músicas em estudo</div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {repertorio.map(m => (
+                  <div key={m.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input style={{ ...voxInputStyle, flex: 1 }} placeholder="Nome da música" value={m.musica} onChange={e => updateMusica(m.id, "musica", e.target.value)} />
+                    <div style={{ width: 150, flexShrink: 0 }}>
+                      <CustomSelectVox value={m.status} onChange={v => updateMusica(m.id, "status", v)} options={STATUS_OPTIONS} />
+                    </div>
+                    {repertorio.length > 1 && (
+                      <button onClick={() => removeMusica(m.id)} style={{ background: "none", border: "none", color: "#a085cc", fontSize: 16, cursor: "pointer", padding: 8, flexShrink: 0 }}>✕</button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={addMusica} style={{ background: "none", border: "none", color: "#a855f7", fontSize: 14, cursor: "pointer", padding: 0, textAlign: "left", marginTop: 4, fontFamily: "inherit", fontWeight: "bold" }}>
+                  + Adicionar música
+                </button>
+              </div>
+            </div>
+
+            {/* Salvar */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+              <button onClick={handleSalvarAluno} style={{
+                background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                border: "none",
+                color: "#fff",
+                borderRadius: 24,
+                padding: "14px 32px",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 15,
+                fontWeight: "bold",
+                boxShadow: "0 8px 24px rgba(168,85,247,0.4)",
+              }}>Salvar registro</button>
+              {alunoSalvo && <span style={{ color: "#4ade80", fontSize: 14, fontWeight: "bold" }}>Registro salvo ✓</span>}
+            </div>
+
+            {/* Histórico de registros */}
+            <div style={voxCardStyle}>
+              <div style={voxEyebrowStyle}>HISTÓRICO</div>
+              <div style={voxCardTitleStyle}>
+                {historico.length > 0 ? `Registros salvos (${historico.length})` : "Nenhum registro ainda"}
+              </div>
+              {historico.length === 0 ? (
+                <div style={{ color: "#a085cc", fontSize: 13, lineHeight: 1.6 }}>
+                  Assim que você clicar em "Salvar registro", cada anotação fica guardada aqui — assim dá pra acompanhar sua evolução ao longo do tempo.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {historico.map(r => (
+                    <div key={r.id} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(180,120,255,0.12)", borderRadius: 14, padding: 16 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <span style={{ color: "#a085cc", fontSize: 12 }}>{formatDataRegistro(r.data)}</span>
+                        <button onClick={() => removeRegistro(r.id)} style={{ background: "none", border: "none", color: "#a085cc", cursor: "pointer", fontSize: 14, padding: 4 }}>✕</button>
+                      </div>
+                      <div style={{ color: "#e0c8ff", fontSize: 13, fontWeight: "bold", marginBottom: 6 }}>
+                        {EVOLUCAO_OPTIONS.find(o => o.v === r.evolucao)?.label || ""}
+                      </div>
+                      {r.relato && <div style={{ color: "#c0b0d8", fontSize: 13, lineHeight: 1.6, marginBottom: 6 }}>{r.relato}</div>}
+                      {r.queixas && <div style={{ color: "#c0b0d8", fontSize: 12, lineHeight: 1.5, marginBottom: 6 }}>🩺 {r.queixas}</div>}
+                      {r.repertorio.length > 0 && (
+                        <div style={{ color: "#7c6a94", fontSize: 12, marginTop: 4 }}>
+                          🎵 {r.repertorio.map(m => m.musica).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ===== IA PROFESSORA ===== */}
         {section === "IA Professora" && (
           <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)" }}>
@@ -840,7 +1138,6 @@ export default function AulasCanto() {
               <div style={{ color: "#a085cc", fontSize: 13 }}>IA especialista em técnica vocal</div>
             </div>
 
-            {/* Chat */}
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16 }}>
               {messages.map((m, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
@@ -877,7 +1174,6 @@ export default function AulasCanto() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input */}
             <div style={{ display: "flex", gap: 10, paddingTop: 12, borderTop: "1px solid rgba(180,120,255,0.15)" }}>
               <input
                 value={input}
@@ -989,6 +1285,32 @@ export default function AulasCanto() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Rodapé */}
+      <div style={{
+        borderTop: "1px solid rgba(180,120,255,0.12)",
+        padding: "20px 24px 28px",
+        textAlign: "center",
+      }}>
+        <div style={{ color: "#6b5080", fontSize: 12, marginBottom: 10 }}>
+          App desenvolvido por Caique Feitosa
+        </div>
+        <a href="https://wa.link/dgrrj8" target="_blank" rel="noopener noreferrer" style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(180,120,255,0.15)",
+          color: "#a085cc",
+          borderRadius: 20,
+          padding: "7px 16px",
+          fontSize: 12,
+          textDecoration: "none",
+          fontFamily: "inherit",
+        }}>
+          💬 Falar com o desenvolvedor
+        </a>
       </div>
     </div>
   );
